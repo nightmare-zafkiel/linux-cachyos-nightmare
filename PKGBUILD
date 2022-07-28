@@ -1,0 +1,968 @@
+# Maintainer: Peter Jung ptr1337 <admin@ptr1337.dev> && Piotr Gorski <lucjan.lucjanov@gmail.com>
+# Contributor: Jan Alexander Steffens (heftig) <jan.steffens@gmail.com>
+# Contributor: Tobias Powalowski <tpowa@archlinux.org>
+# Contributor: Thomas Baechler <thomas@archlinux.org>
+
+### Selecting the CPU scheduler
+# ATTENTION - one of seven predefined values should be selected!
+# 'bmq' - select 'BitMap Queue CPU scheduler'
+# 'pds' - select 'Priority and Deadline based Skip list multiple queue CPU scheduler'
+# 'cacule' - select 'CacULE scheduler'
+# 'cacule-rdb' - select 'CacULE-RDB scheduler'
+# 'bore' - select 'Burst-Oriented Response Enhancer'
+# 'cfs' - select 'Completely Fair Scheduler'
+# 'tt' - select 'Task Type Scheduler by Hamad Marri'
+# 'hardened' - select 'BORE Scheduler hardened' ## kernel with hardened config and hardening patches with the bore scheduler
+_cpusched='bmq'
+
+### TkG patches
+# Apply Tkg default settings
+_tkgify=y
+
+# You can pass a default set of kernel command line options here - example: "intel_pstate=passive nowatchdog amdgpu.ppfeaturemask=0xfffd7fff mitigations=off"
+_custom_commandline="intel_pstate=passive"
+
+# Set to "true" to use ACS override patch - https://wiki.archlinux.org/index.php/PCI_passthrough_via_OVMF#Bypassing_the_IOMMU_groups_.28ACS_override_patch.29 - Kernel default is "false"
+_acs_override=y
+
+# Set to "true" to enable misc additions - May contain temporary fixes pending upstream or changes that can break on non-Arch - Kernel default is "true"
+_misc_adds=y
+
+# Set to "true" to disable FUNCTION_TRACER/GRAPH_TRACER, lowering overhead but limiting debugging and analyzing of kernel functions - Kernel default is "false"
+_ftracedisable=y
+
+### BUILD OPTIONS
+# Set these variables to ANYTHING that is not null to enable them
+
+_noccache="false"
+
+### Tweak kernel options prior to a build via nconfig
+_makenconfig=
+
+# NUMA is optimized for multi-socket motherboards.
+# A single multi-core CPU actually runs slower with NUMA enabled.
+# See, https://bugs.archlinux.org/task/31187
+# Disabled because nvidia :D
+_NUMAdisable=n
+
+# Compile ONLY used modules to VASTLYreduce the number of modules built
+# and the build time.
+#
+# To keep track of which modules are needed for your specific system/hardware,
+# give module_db script a try: https://aur.archlinux.org/packages/modprobed-db
+# This PKGBUILD read the database kept if it exists
+#
+# More at this wiki page ---> https://wiki.archlinux.org/index.php/Modprobed-db
+_localmodcfg=
+
+# Use the current kernel's .config file
+# Enabling this option will use the .config of the RUNNING kernel rather than
+# the ARCH defaults. Useful when the package gets updated and you already went
+# through the trouble of customizing your config options.  NOT recommended when
+# a new kernel is released, but again, convenient for package bumps.
+_use_current=
+
+### Set performance governor as default
+_per_gov=y
+
+### Optimize harder
+_cc_harder=y
+
+### Enable TCP_CONG_BBR2
+_tcp_bbr2=y
+
+### Running with a 1000HZ, 750Hz, 600 Hz or 500Hz tick rate
+_HZ_ticks=1000
+
+## Choose between perodic, idle or full
+### Full tickless can give higher performances in various cases but, depending on hardware, lower consistency.
+_tickrate=full
+
+## Choose between full(low-latency), voluntary or server
+_preempt=full
+
+### Disable MQ-Deadline I/O scheduler
+_mq_deadline_disable=y
+
+### Disable Kyber I/O scheduler
+_kyber_disable=y
+
+### Enable multigenerational LRU
+# ATTENTION - one of three predefined values should be selected!
+# 'standard' - enable multigenerational LRU 
+# 'stats' - enable multigenerational LRU with stats
+# 'none' - disable multigenerational LRU
+_lru_config='standard'
+
+## Enable DAMON
+_damon=y
+
+## Enable Linux Random Number Generator
+_lrng_enable=y
+
+# CPU compiler optimizations - Defaults to prompt at kernel config if left empty
+# AMD CPUs : "k8" "k8sse3" "k10" "barcelona" "bobcat" "jaguar" "bulldozer" "piledriver" "steamroller" "excavator" "zen" "zen2" "zen3"
+# Intel CPUs : "mpsc"(P4 & older Netburst based Xeon) "atom" "core2" "nehalem" "westmere" "silvermont" "sandybridge" "ivybridge" "haswell" "broadwell" "skylake" "skylakex" "cannonlake" "icelake" "goldmont" "goldmontplus" "cascadelake" "cooperlake" "tigerlake" "sapphirerapids" "rocketlake" "alderlake"
+# Other options :
+# - "native_amd" (use compiler autodetection - Selecting your arch manually in the list above is recommended instead of this option)
+# - "native_intel" (use compiler autodetection and will prompt for P6_NOPS - Selecting your arch manually in the list above is recommended instead of this option)
+# - "generic" (kernel's default - to share the package between machines with different CPU µarch as long as they are x86-64)
+#
+# Or use the _use_auto_optimization with _use_auto_optimization=y
+_processor_opt=rocketlake
+
+_use_auto_optimization=y
+
+# disable debug to lower the size of the kernel
+_disable_debug=y
+
+## Enable zram/zswap ZSTD compression
+_zstd_swap_compression=y
+
+_nf_cone=y
+
+# Clang LTO mode, only available with the "llvm" compiler - options are "no", "full" or "thin".
+# "full: uses 1 thread for Linking, slow and uses more memory, theoretically with the highest performance gains."
+# "thin: uses multiple threads, faster and uses less memory, may have a lower runtime performance than Full."
+_use_llvm_lto=full
+
+# KCFI is a proposed forward-edge control-flow integrity scheme for
+# Clang, which is more suitable for kernel use than the existing CFI
+# scheme used by CONFIG_CFI_CLANG. KCFI doesn't require LTO, doesn't
+# alter function references to point to a jump table, and won't break
+# function address equality.
+# ATTENTION!: you do need a patched llvm for the usage of kcfi,
+# you can find a patched llvm-git in the cachyos-repo's.
+# The packagename is called "llvm-kcfi"
+_use_kcfi=
+
+# Build the zfs module builtin in to the kernel
+_build_zfs=
+
+# Enable bcachefs
+_bcachefs=
+
+# Enable Anbox support
+_anbox=y
+
+### END OF BUILD OPTIONS
+
+pkgsuffix=cachyos-nightmare
+pkgbase=linux-$pkgsuffix
+_major=5.19
+_minor=0
+#_minorc=$((_minor+1))
+_rcver=rc8
+pkgver=${_major}.${_rcver}
+#_stable=${_major}.${_minor}
+#_stable=${_major}
+_stable=${_major}-${_rcver}
+_srcname=linux-${_stable}
+#_srcname=linux-${_major}
+pkgdesc='Linux BMQ scheduler Kernel by CachyOS and with some other patches and other improvements'
+pkgrel=1
+_kernver=$pkgver-$pkgrel
+arch=('x86_64' 'x86_64_v3')
+url="https://github.com/CachyOS/linux-cachyos"
+license=('GPL2')
+options=('!strip')
+makedepends=('bc' 'libelf' 'pahole' 'cpio' 'perl' 'tar' 'xz' 'zstd' 'gcc' 'gcc-libs' 'glibc' 'binutils' 'make' 'patch')
+# LLVM makedepends
+if [ -n "$_use_llvm_lto" ]; then
+    makedepends+=(clang llvm lld python)
+    BUILD_FLAGS=(
+        CC=clang
+        LD=ld.lld
+        LLVM=1
+        LLVM_IAS=1
+    )
+fi
+# ZFS makedepends
+if [ -n "$_build_zfs" ]; then
+    makedepends+=(git)
+
+fi
+_patchsource="https://raw.githubusercontent.com/ptr1337/kernel-patches/master/${_major}"
+source=(
+    "https://git.kernel.org/torvalds/t/linux-${_major}-${_rcver}.tar.gz"
+    "config"
+    "auto-cpu-optimization.sh"
+    "${_patchsource}/all/0001-cachyos-base-rc-all-dev.patch")
+## ZFS Support
+if [ -n "$_build_zfs" ]; then
+    source+=("git+https://github.com/openzfs/zfs.git#commit=6c3c5fcfbe27d9193cd131753cc7e47ee2784621")
+fi
+## BMQ Scheduler
+if [ "$_cpusched" = "bmq" ]; then
+    source+=("${_patchsource}/sched/0001-prjc.patch")
+fi
+## PDS Scheduler
+if [ "$_cpusched" = "pds" ]; then
+    source+=("${_patchsource}/sched/0001-prjc.patch")
+fi
+## BORE Scheduler
+if [ "$_cpusched" = "bore" ]; then
+    source+=("${_patchsource}/sched/0001-bore.patch")
+fi
+## CacULE Scheduler
+if [ "$_cpusched" = "cacule" ]; then
+    source+=("${_patchsource}/sched/0001-cacULE-cachy.patch")
+fi
+## CacULE-RDB Scheduler
+if [ "$_cpusched" = "cacule-rdb" ]; then
+    source+=("${_patchsource}/sched/0001-cacULE-cachy.patch")
+fi
+#ä TT Scheduler
+if [ "$_cpusched" = "tt" ]; then
+    source+=("${_patchsource}/sched/0001-tt-cachy.patch")
+fi
+## Hardened Patches with BORE Scheduler
+if [ "$_cpusched" = "hardened" ]; then
+    source+=("${_patchsource}/sched/0001-bore-sched.patch"
+         "${_patchsource}/0001-hardening.patch")
+fi
+## Kernel CFI Patch
+if [ -n "$_use_kcfi" ]; then
+    source+=("${_patchsource}/0001-kcfi.patch")
+    depends+=(llvm-git llvm-libs-git python)
+    BUILD_FLAGS=(
+        CC=clang
+        LD=ld.lld
+        LLVM=1
+    )
+fi
+## bcachefs Support
+if [ -n "$_bcachefs" ]; then
+    source+=("${_patchsource}/0001-bcachefs-after-lru.patch")
+fi
+
+# Custom patches (Tkg & kernel-patches)
+if [ -n "$_tkgify" ]; then
+    # Patches for WRITE_WATCH support in Wine.
+    source+=(
+        "https://raw.githubusercontent.com/Frogging-Family/linux-tkg/master/linux-tkg-patches/5.19/0001-mm-Support-soft-dirty-flag-reset-for-VA-range.patch"
+        "https://raw.githubusercontent.com/Frogging-Family/linux-tkg/master/linux-tkg-patches/5.19/0002-mm-Support-soft-dirty-flag-read-with-reset.patch"
+    )
+fi
+
+if [ -n "$_acs_override" ]; then
+    source+=("https://raw.githubusercontent.com/Frogging-Family/linux-tkg/master/linux-tkg-patches/5.19/0006-add-acs-overrides_iommu.patch")
+fi
+
+if [ -n "$_misc_adds" ]; then
+    source+=("https://raw.githubusercontent.com/Frogging-Family/linux-tkg/master/linux-tkg-patches/5.19/0012-misc-additions.patch")
+fi
+
+export KBUILD_BUILD_HOST=archlinux
+export KBUILD_BUILD_USER=$pkgbase
+export KBUILD_BUILD_TIMESTAMP="$(date -Ru${SOURCE_DATE_EPOCH:+d @$SOURCE_DATE_EPOCH})"
+
+prepare() {
+
+    cd ${srcdir}/$_srcname
+
+    echo "Setting version..."
+    scripts/setlocalversion --save-scmversion
+    echo "-$pkgrel" > localversion.10-pkgrel
+    echo "${pkgbase#linux}" > localversion.20-pkgname
+
+    local src
+    for src in "${source[@]}"; do
+        src="${src%%::*}"
+        src="${src##*/}"
+        [[ $src = *.patch ]] || continue
+        echo "Applying patch $src..."
+        patch -Np1 < "../$src"
+    done
+
+    echo "Setting config..."
+    cp ../config .config
+
+    ### Select CPU optimization
+    if [ -n "$_processor_opt" ]; then
+        MARCH=$(echo $_processor_opt|tr '[:lower:]' '[:upper:]'&&echo)
+        MARCH2=M${MARCH}
+        scripts/config -k --disable CONFIG_GENERIC_CPU
+        scripts/config -k --enable CONFIG_${MARCH2}
+    fi
+
+    ### Use autooptimization
+    if [ -n "$_use_auto_optimization" ]; then
+        "${srcdir}"/auto-cpu-optimization.sh
+    fi
+
+    ### Selecting the CPU scheduler
+    if [ "$_cpusched" = "bmq" ]; then
+        echo "Selecting BMQ CPU scheduler..."
+        scripts/config --enable SCHED_ALT \
+            --enable SCHED_BMQ \
+            --disable SCHED_PDS
+    elif [ "$_cpusched" = "pds" ]; then
+        echo "Selecting PDS CPU scheduler..."
+        scripts/config --enable SCHED_ALT \
+            --disable SCHED_BMQ \
+            --enable SCHED_PDS
+    elif [ "$_cpusched" = "cacule" ]; then
+        echo "Selecting CacULE scheduler..."
+        scripts/config --enable CACULE_SCHED \
+            --disable CACULE_RDB
+    elif [ "$_cpusched" = "cacule-rdb" ]; then
+        echo "Selecting CacULE-RDB scheduler..."
+        scripts/config --enable CACULE_SCHED \
+            --enable CACULE_RDB \
+            --set-val RDB_INTERVAL 19
+    elif [ "$_cpusched" = "bore" ]; then
+        echo "Selecting BORE Scheduler..."
+        scripts/config --enable SCHED_BORE
+    elif [ "$_cpusched" = "tt" ]; then
+        echo "Selecting TT Scheduler..."
+        scripts/config --enable TT_SCHED \
+            --enable TT_ACCOUNTING_STATS
+    elif [ "$_cpusched" = "cfs" ]; then
+        echo "Selecting Completely Fair Scheduler..."
+    elif [ "$_cpusched" = "hardened" ]; then
+        echo "Selecting hardened patches with the BORE Scheduler..."
+    else
+        if [ -n "$_cpusched" ]; then
+            error "The value $_cpusched is invalid. Choose the correct one again."
+        else
+            error "The value is empty. Choose the correct one again."
+        fi
+        error "Selecting the CPU scheduler failed!"
+        exit
+    fi
+
+    ## Tkg-ify
+    if [ -n "$_tkgify" ]; then
+        echo "Using linux-tkg default settings..."
+        scripts/config --disable DYNAMIC_FAULT \
+            --disable DEFAULT_FQ_CODEL \
+            --enable DEFAULT_CAKE \
+
+        scripts/config --disable NTP_PPS \
+            --disable CPU_FREQ_DEFAULT_GOV_PERFORMANCE_NODEF \
+            --disable ZSWAP_COMPRESSOR_DEFAULT_LZO \
+            --disable PROFILE_ALL_BRANCHES
+
+        scripts/config --enable CRYPTO_LZ4 \
+            --enable CRYPTO_LZ4HC \
+            --enable LZ4_COMPRESS \
+            --enable LZ4HC_COMPRESS \
+            --enable ZSWAP_COMPRESSOR_DEFAULT_LZ4 \
+            --enable CMDLINE_BOOL \
+            --enable BLK_DEV_LOOP \
+            --enable X86_AMD_PSTATE
+
+        scripts/config --set-str ZSWAP_COMPRESSOR_DEFAULT lz4 \
+            --set-str CMDLINE "$_custom_commandline" \
+            --set-val NR_CPUS 64
+
+        scripts/config --disable CMDLINE_OVERRIDE \
+            --disable X86_P6_NOP \
+            --disable CPU_FREQ_DEFAULT_GOV_ONDEMAND \
+            --disable CPU_FREQ_DEFAULT_GOV_CONSERVATIVE
+
+        scripts/config -k --module I2C_NCT6775
+
+        # Reset local version string if ever it's in the .config file
+        scripts/config --set-str localversion ""
+
+        scripts/config --disable KCSAN \
+            --disable INIT_STACK_ALL_PATTERN \
+            --enable INIT_ON_FREE_DEFAULT_ON \
+            --enable INIT_STACK_ALL_ZERO \
+            --disable INIT_STACK_NONE
+
+        if [ "$_cpusched" = "bmq" ]; then
+            scripts/config --set-val SCHED_TIMESLICE 2
+        fi
+
+        if [ -n "$_ftracedisable" ]; then
+            scripts/config --disable FUNCTION_TRACER \
+                --disable FUNCTION_GRAPH_TRACER
+        fi
+    fi
+
+    ### Enable KCFI
+    if [ -n "$_use_kcfi" ]; then
+        echo "Enabling kCFI"
+        scripts/config --enable ARCH_SUPPORTS_CFI_CLANG \
+            --enable CFI_CLANG
+    fi
+
+    ### Select LLVM level
+    if [ "$_use_llvm_lto" = "thin" ]; then
+        echo "Enabling LLVM THIN LTO..."
+        scripts/config --enable LTO \
+            --enable LTO_CLANG \
+            --enable ARCH_SUPPORTS_LTO_CLANG \
+            --enable ARCH_SUPPORTS_LTO_CLANG_THIN \
+            --disable LTO_NONE \
+            --enable HAS_LTO_CLANG \
+            --disable LTO_CLANG_FULL \
+            --enable LTO_CLANG_THIN \
+            --enable HAVE_GCC_PLUGINS
+    elif [ "$_use_llvm_lto" = "full" ]; then
+        echo "Enabling LLVM FULL LTO..."
+        scripts/config --enable LTO \
+            --enable LTO_CLANG \
+            --enable ARCH_SUPPORTS_LTO_CLANG \
+            --enable ARCH_SUPPORTS_LTO_CLANG_THIN \
+            --disable LTO_NONE \
+            --enable HAS_LTO_CLANG \
+            --enable LTO_CLANG_FULL \
+            --disable LTO_CLANG_THIN \
+            --enable HAVE_GCC_PLUGINS
+    else
+        scripts/config --enable LTO_NONE
+    fi
+
+    ### Select tick rate
+    if [ "$_HZ_ticks" = "1000" ]; then
+        echo "Setting tick rate to 1k Hz..."
+        scripts/config --disable HZ_300 \
+            --enable HZ_1000 \
+            --set-val HZ 1000
+    elif [ "$_HZ_ticks" = "750" ]; then
+        echo "Setting tick rate to 750Hz..."
+        scripts/config --disable HZ_300 \
+            --enable HZ_750 \
+            --set-val HZ 750
+    elif [ "$_HZ_ticks" = "600" ]; then
+        echo "Setting tick rate to 600Hz..."
+        scripts/config --disable HZ_300 \
+            --enable HZ_600 \
+            --set-val HZ 600
+    elif [ "$_HZ_ticks" = "500" ]; then
+        echo "Setting tick rate to 500Hz..."
+        scripts/config --disable HZ_300 \
+            --enable HZ_500 \
+            --set-val HZ 500
+    else
+        echo "Setting tick rate to 300Hz..."
+        scripts/config --enable HZ_300 \
+            --set-val HZ 300
+    fi
+
+    ### Disable NUMA
+    if [ -n "$_NUMAdisable" ]; then
+        echo "Disabling NUMA from kernel config..."
+        scripts/config --disable NUMA \
+            --disable AMD_NUMA \
+            --disable X86_64_ACPI_NUMA \
+            --disable NODES_SPAN_OTHER_NODES \
+            --disable NUMA_EMU \
+            --disable NEED_MULTIPLE_NODES \
+            --disable USE_PERCPU_NUMA_NODE_ID \
+            --disable ACPI_NUMA \
+            --disable ARCH_SUPPORTS_NUMA_BALANCING \
+            --disable NODES_SHIFT \
+            --undefine NODES_SHIFT \
+            --disable NEED_MULTIPLE_NODES
+    fi
+
+    ### Disable MQ Deadline I/O scheduler
+    if [ -n "$_mq_deadline_disable" ]; then
+        echo "Disabling MQ-Deadline I/O scheduler..."
+        scripts/config --disable MQ_IOSCHED_DEADLINE
+    fi
+
+    ### Disable Kyber I/O scheduler
+    if [ -n "$_kyber_disable" ]; then
+        echo "Disabling Kyber I/O scheduler..."
+        scripts/config --disable MQ_IOSCHED_KYBER
+    fi
+
+    ### Select performance governor
+    if [ -n "$_per_gov" ]; then
+        echo "Setting performance governor..."
+        scripts/config --disable CPU_FREQ_DEFAULT_GOV_SCHEDUTIL \
+            --enable CPU_FREQ_DEFAULT_GOV_PERFORMANCE \
+            --enable PCIEASPM \
+            --enable PCIEASPM_PERFORMANCE \
+            --enable PCIE_BUS_PERFORMANCE
+    fi
+
+    ### Select tick type
+    if [ "$_tickrate" = "periodic" ]; then
+        echo "Enabling periodic ticks..."
+        scripts/config --disable NO_HZ_IDLE \
+            --disable NO_HZ_FULL \
+            --disable NO_HZ \
+            --disable NO_HZ_COMMON \
+            --enable HZ_PERIODIC
+    elif [ "$_tickrate" = "idle" ]; then
+        echo "Enabling idle ticks.."
+        scripts/config --disable HZ_PERIODIC \
+            --disable NO_HZ_FULL \
+            --enable NO_HZ_IDLE \
+            --enable NO_HZ \
+            --enable NO_HZ_COMMON
+    elif [ "$_tickrate" = "full" ]; then
+        echo "Enabling full ticks..."
+        scripts/config --disable HZ_PERIODIC \
+            --disable NO_HZ_IDLE \
+            --disable CONTEXT_TRACKING_FORCE \
+            --enable NO_HZ_FULL_NODEF \
+            --enable NO_HZ_FULL \
+            --enable NO_HZ \
+            --enable NO_HZ_COMMON \
+            --enable CONTEXT_TRACKING
+    else
+        if [ -n "$_tickrate" ]; then
+            error "The value $_tickrate is invalid. Choose the correct one again."
+        else
+            error "The value is empty. Choose the correct one again."
+        fi
+        error "Selecting the tick rate failed!"
+        exit
+    fi
+
+    ### Select preempt type
+    if [ "$_preempt" = "full" ]; then
+        echo "Enabling low latency preempt..."
+        scripts/config --enable PREEMPT_BUILD \
+            --disable PREEMPT_NONE \
+            --disable PREEMPT_VOLUNTARY \
+            --enable PREEMPT \
+            --enable PREEMPT_COUNT \
+            --enable PREEMPTION \
+            --enable PREEMPT_DYNAMIC
+    elif [ "$_preempt" = "voluntary" ]; then
+        echo "Enabling voluntary preempt..."
+        scripts/config --enable PREEMPT_BUILD \
+            --disable PREEMPT_NONE \
+            --enable PREEMPT_VOLUNTARY \
+            --disable PREEMPT \
+            --enable PREEMPT_COUNT \
+            --enable PREEMPTION \
+            --disable PREEMPT_DYNAMIC
+    elif [ "$_preempt" = "server" ]; then
+        echo "Enabling server preempt..."
+        scripts/config --enable PREEMPT_NONE_BUILD \
+            --enable PREEMPT_NONE \
+            --disable PREEMPT_VOLUNTARY \
+            --disable PREEMPT \
+            --disable PREEMPT_COUNT \
+            --disable PREEMPTION \
+            --disable PREEMPT_DYNAMIC
+    else
+        if [ -n "$_preempt" ]; then
+            error "The value $_preempt is invalid. Choose the correct one again."
+        else
+            error "The value is empty. Choose the correct one again."
+        fi
+        error "Selecting PREEMPT failed!"
+        exit
+    fi
+
+    ### Enable O3
+    if [ -n "$_cc_harder" ]; then
+        echo "Enabling KBUILD_CFLAGS -O3..."
+        scripts/config --disable CC_OPTIMIZE_FOR_PERFORMANCE \
+            --enable CC_OPTIMIZE_FOR_PERFORMANCE_O3
+    fi
+
+    ### Enable bbr2
+    if [ -n "$_tcp_bbr2" ]; then
+        echo "Disabling TCP_CONG_CUBIC..."
+        scripts/config --module TCP_CONG_CUBIC \
+            --disable DEFAULT_CUBIC \
+            --enable TCP_CONG_BBR2 \
+            --enable DEFAULT_BBR2 \
+            --set-str DEFAULT_TCP_CONG bbr2
+    fi
+
+    ### Enable FULLCONENAT
+    if [ -n "$_nf_cone" ]; then
+        echo "Enabling FULLCONENAT..."
+        scripts/config --module IP_NF_TARGET_FULLCONENAT \
+            --module NETFILTER_XT_TARGET_FULLCONENAT
+    fi
+
+    ### Select LRU config
+    if [ "$_lru_config" = "standard" ]; then
+       echo "Enabling multigenerational LRU..."
+       scripts/config --enable CONFIG_LRU_GEN \
+           --enable CONFIG_LRU_GEN_ENABLED \
+           --disable CONFIG_LRU_GEN_STATS
+    elif [ "$_lru_config" = "stats" ]; then
+       echo "Enabling multigenerational LRU with stats..."
+       scripts/config --enable CONFIG_LRU_GEN \
+           --enable CONFIG_LRU_GEN_ENABLED \
+           --enable CONFIG_LRU_GEN_STATS
+    elif [ "$_lru_config" = "none" ]; then
+       echo "Disabling multigenerational LRU..."
+       scripts/config --disable CONFIG_LRU_GEN
+    else
+        if [ -n "$_lru_config" ]; then
+           error "The value $_lru_config is invalid. Choose the correct one again."
+        else
+           error "The value is empty. Choose the correct one again."
+        fi
+         error "Enabling multigenerational LRU failed!"
+         exit
+    fi
+
+    ### Enable DAMON
+    if [ -n "$_damon" ]; then
+        echo "Enabling DAMON..."
+        scripts/config --enable DAMON \
+            --enable DAMON_VADDR \
+            --enable DAMON_DBGFS \
+            --enable DAMON_SYSFS \
+            --enable DAMON_PADDR \
+            --enable DAMON_RECLAIM \
+            --enable DAMON_LRU_SORT
+    fi
+
+    ### Enable LRNG
+    if [ -n "$_lrng_enable" ]; then
+        echo "Enabling Linux Random Number Generator ..."
+        scripts/config --disable RANDOM_DEFAULT_IMPL \
+            --enable LRNG \
+            --enable LRNG_SHA256 \
+            --enable LRNG_COMMON_DEV_IF \
+            --enable LRNG_DRNG_ATOMIC \
+            --enable LRNG_SYSCTL \
+            --enable LRNG_RANDOM_IF \
+            --module LRNG_KCAPI_IF \
+            --module LRNG_HWRAND_IF \
+            --enable LRNG_DEV_IF \
+            --enable LRNG_RUNTIME_ES_CONFIG \
+            --enable LRNG_IRQ_DFLT_TIMER_ES \
+            --disable LRNG_SCHED_DFLT_TIMER_ES \
+            --enable LRNG_TIMER_COMMON \
+            --disable LRNG_COLLECTION_SIZE_256 \
+            --disable LRNG_COLLECTION_SIZE_512 \
+            --enable LRNG_COLLECTION_SIZE_1024 \
+            --disable LRNG_COLLECTION_SIZE_2048 \
+            --disable LRNG_COLLECTION_SIZE_4096 \
+            --disable LRNG_COLLECTION_SIZE_8192 \
+            --set-val LRNG_COLLECTION_SIZE 1024 \
+            --enable LRNG_HEALTH_TESTS \
+            --set-val LRNG_RCT_CUTOFF 31 \
+            --set-val LRNG_APT_CUTOFF 325 \
+            --enable LRNG_IRQ \
+            --enable LRNG_CONTINUOUS_COMPRESSION_ENABLED \
+            --disable LRNG_CONTINUOUS_COMPRESSION_DISABLED \
+            --enable LRNG_ENABLE_CONTINUOUS_COMPRESSION \
+            --enable LRNG_SWITCHABLE_CONTINUOUS_COMPRESSION \
+            --set-val LRNG_IRQ_ENTROPY_RATE 256 \
+            --enable LRNG_JENT \
+            --set-val LRNG_JENT_ENTROPY_RATE 16 \
+            --enable LRNG_CPU \
+            --set-val LRNG_CPU_FULL_ENT_MULTIPLIER 1 \
+            --set-val LRNG_CPU_ENTROPY_RATE 8 \
+            --enable LRNG_SCHED \
+            --set-val LRNG_SCHED_ENTROPY_RATE 4294967295 \
+            --enable LRNG_DRNG_CHACHA20 \
+            --module LRNG_DRBG \
+            --module LRNG_DRNG_KCAPI \
+            --enable LRNG_SWITCH \
+            --enable LRNG_SWITCH_HASH \
+            --module LRNG_HASH_KCAPI \
+            --enable LRNG_SWITCH_DRNG \
+            --module LRNG_SWITCH_DRBG \
+            --module LRNG_SWITCH_DRNG_KCAPI \
+            --enable LRNG_DFLT_DRNG_CHACHA20 \
+            --disable LRNG_DFLT_DRNG_DRBG \
+            --disable LRNG_DFLT_DRNG_KCAPI \
+            --enable LRNG_TESTING_MENU \
+            --disable LRNG_RAW_HIRES_ENTROPY \
+            --disable LRNG_RAW_JIFFIES_ENTROPY \
+            --disable LRNG_RAW_IRQ_ENTROPY \
+            --disable LRNG_RAW_RETIP_ENTROPY \
+            --disable LRNG_RAW_REGS_ENTROPY \
+            --disable LRNG_RAW_ARRAY \
+            --disable LRNG_IRQ_PERF \
+            --disable LRNG_RAW_SCHED_HIRES_ENTROPY \
+            --disable LRNG_RAW_SCHED_PID_ENTROPY \
+            --disable LRNG_RAW_SCHED_START_TIME_ENTROPY \
+            --disable LRNG_RAW_SCHED_NVCSW_ENTROPY \
+            --disable LRNG_SCHED_PERF \
+            --disable LRNG_ACVT_HASH \
+            --disable LRNG_RUNTIME_MAX_WO_RESEED_CONFIG \
+            --disable LRNG_TEST_CPU_ES_COMPRESSION \
+            --enable LRNG_SELFTEST \
+            --disable LRNG_SELFTEST_PANIC
+    fi
+
+    ### Enable ZSTD swap/zram compression
+    if [ -n "$_zstd_swap_compression" ]; then
+        echo "Enabling zram ZSTD compression..."
+        scripts/config --disable ZRAM_DEF_COMP_LZORLE \
+            --enable ZRAM_DEF_COMP_ZSTD \
+            --set-str ZRAM_DEF_COMP zstd \
+            --disable ZSWAP_COMPRESSOR_DEFAULT_LZ4 \
+            --enable ZSWAP_COMPRESSOR_DEFAULT_ZSTD \
+            --set-str ZSWAP_COMPRESSOR_DEFAULT zstd \
+            --enable ZRAM_ENTROPY \
+            --set-val ZRAM_ENTROPY_THRESHOLD 100000
+    fi
+
+    ### Disable DEBUG
+    if [ -n "$_disable_debug" ]; then
+        echo "Disabling debugging..."
+        scripts/config --disable DEBUG_INFO \
+            --disable DEBUG_INFO_BTF \
+            --disable DEBUG_INFO_DWARF4 \
+            --disable DEBUG_INFO_DWARF5 \
+            --disable PAHOLE_HAS_SPLIT_BTF \
+            --disable DEBUG_INFO_BTF_MODULES \
+            --disable SLUB_DEBUG \
+            --disable PM_DEBUG \
+            --disable PM_ADVANCED_DEBUG \
+            --disable PM_SLEEP_DEBUG \
+            --disable ACPI_DEBUG \
+            --disable SCHED_DEBUG \
+            --disable LATENCYTOP \
+            --disable DEBUG_PREEMPT
+    fi
+
+    ### Enable binder & ashmem
+    if [ -n "$_anbox" ]; then
+        echo "Enabling Anbox support (binder & ashmem)..."
+        scripts/config --enable ASHMEM \
+            --enable ION \
+            --enable ION_CMA_HEAP \
+            --enable ANDROID \
+            --enable ANDROID_BINDER_IPC \
+            --enable ANDROID_BINDERFS \
+            --disable ION_SYSTEM_HEAP \
+            --disable ANDROID_BINDER_IPC_SELFTEST \
+            --set-str ANDROID_BINDER_DEVICES binder,hwbinder,vndbinder
+    fi
+
+    echo "Enabling USER_NS_UNPRIVILEGED"
+    scripts/config --enable USER_NS
+    echo "Enabling WINE FASTSYNC"
+    scripts/config --enable WINESYNC
+
+    ### Optionally use running kernel's config
+    # code originally by nous; http://aur.archlinux.org/packages.php?ID=40191
+    if [ -n "$_use_current" ]; then
+        if [[ -s /proc/config.gz ]]; then
+            echo "Extracting config from /proc/config.gz..."
+            # modprobe configs
+            zcat /proc/config.gz > ./.config
+        else
+            warning "Your kernel was not compiled with IKPROC!"
+            warning "You cannot read the current config!"
+            warning "Aborting!"
+            exit
+        fi
+    fi
+
+
+    ### Optionally load needed modules for the make localmodconfig
+    # See https://aur.archlinux.org/packages/modprobed-db
+    if [ -n "$_localmodcfg" ]; then
+        if [ -e $HOME/.config/modprobed.db ]; then
+            echo "Running Steven Rostedt's make localmodconfig now"
+            make ${BUILD_FLAGS[*]} LSMOD=$HOME/.config/modprobed.db localmodconfig
+        else
+            echo "No modprobed.db data found"
+            exit
+        fi
+    fi
+
+    ### Rewrite configuration
+    echo "Rewrite configuration..."
+    make ${BUILD_FLAGS[*]} prepare
+    yes "" | make ${BUILD_FLAGS[*]} config >/dev/null
+    diff -u ../config .config || :
+
+    ### Prepared version
+    make ${BUILD_FLAGS[*]} -s kernelrelease > version
+    echo "Prepared $pkgbase version $(<version)"
+
+    ### Running make nconfig
+    [[ -z "$_makenconfig" ]] ||  make ${BUILD_FLAGS[*]} nconfig
+
+    ### Save configuration for later reuse
+    echo "Save configuration for later reuse..."
+    cat .config > "${startdir}/config-${pkgver}-${pkgrel}${pkgbase#linux}"
+
+    ### Save configuration for later reuse
+    # cp -Tf ./.config "${startdir}/config-${pkgver}-${pkgrel}${pkgbase#linux}"
+
+}
+
+build() {
+    cd ${srcdir}/${_srcname}
+    if [ "$_noccache" != "true" ] && pacman -Qq ccache &> /dev/null; then
+        export PATH="/usr/lib/ccache/bin/:$PATH"
+        export CCACHE_SLOPPINESS="file_macro,locale,time_macros"
+        export CCACHE_NOHASHDIR="true"
+        echo 'ccache was found and will be used'
+    fi
+
+    make ${BUILD_FLAGS[*]} -j$(nproc) all
+
+    if [ -n "$_build_zfs" ]; then
+        cd ${srcdir}/"zfs"
+
+        if [ -n "$_use_llvm_lto" ]; then
+            ./autogen.sh
+            sed -i "s|\$(uname -r)|${pkgver}-${pkgsuffix}|g" configure
+            ./configure KERNEL_LLVM=1 --prefix=/usr --sysconfdir=/etc --sbindir=/usr/bin --libdir=/usr/lib \
+                --datadir=/usr/share --includedir=/usr/include --with-udevdir=/lib/udev \
+                --libexecdir=/usr/lib/zfs --with-config=kernel \
+                --with-linux=${srcdir}/$_srcname
+        else
+            ./autogen.sh
+            sed -i "s|\$(uname -r)|${pkgver}-${pkgsuffix}|g" configure
+            ./configure --prefix=/usr --sysconfdir=/etc --sbindir=/usr/bin --libdir=/usr/lib \
+                --datadir=/usr/share --includedir=/usr/include --with-udevdir=/lib/udev \
+                --libexecdir=/usr/lib/zfs --with-config=kernel \
+                --with-linux=${srcdir}/$_srcname
+        fi
+        make ${BUILD_FLAGS[*]}
+    fi
+}
+
+_package() {
+    pkgdesc="The $pkgdesc kernel and modules"
+    depends=('coreutils' 'kmod' 'initramfs')
+    optdepends=(
+        'wireless-regdb: to set the correct wireless channels of your country'
+        'linux-firmware: firmware images needed for some devices'
+        'modprobed-db: Keeps track of EVERY kernel module that has ever been probed - useful for those of us who make localmodconfig'
+        'uksmd: Userspace KSM helper daemon'
+    )
+    provides=(VIRTUALBOX-GUEST-MODULES WIREGUARD-MODULE KSMBD-MODULE UKSMD-BUILTIN)
+
+    cd ${srcdir}/$_srcname
+
+    local kernver="$(<version)"
+    local modulesdir="$pkgdir/usr/lib/modules/$kernver"
+
+    echo "Installing boot image..."
+    # systemd expects to find the kernel here to allow hibernation
+    # https://github.com/systemd/systemd/commit/edda44605f06a41fb86b7ab8128dcf99161d2344
+    install -Dm644 "$(make -s image_name)" "$modulesdir/vmlinuz"
+
+    # Used by mkinitcpio to name the kernel
+    echo "$pkgbase" | install -Dm644 /dev/stdin "$modulesdir/pkgbase"
+
+    echo "Installing modules..."
+    make INSTALL_MOD_PATH="$pkgdir/usr" INSTALL_MOD_STRIP=1 \
+        DEPMOD=/doesnt/exist  modules_install  # Suppress depmod
+
+    # remove build and source links
+    rm "$modulesdir"/{source,build}
+}
+
+_package-headers() {
+    pkgdesc="Headers and scripts for building modules for the $pkgdesc kernel"
+    depends=('pahole' linux-${pkgsuffix} )
+
+    cd ${srcdir}/${_srcname}
+    local builddir="$pkgdir/usr/lib/modules/$(<version)/build"
+
+    echo "Installing build files..."
+    install -Dt "$builddir" -m644 .config Makefile Module.symvers System.map \
+        localversion.* version vmlinux
+    install -Dt "$builddir/kernel" -m644 kernel/Makefile
+    install -Dt "$builddir/arch/x86" -m644 arch/x86/Makefile
+    cp -t "$builddir" -a scripts
+
+    # required when STACK_VALIDATION is enabled
+    install -Dt "$builddir/tools/objtool" tools/objtool/objtool
+
+    # required when DEBUG_INFO_BTF_MODULES is enabled
+    if [ -f tools/bpf/resolve_btfids/resolve_btfids ]; then
+        install -Dt "$builddir/tools/bpf/resolve_btfids" tools/bpf/resolve_btfids/resolve_btfids
+    fi
+
+    echo "Installing headers..."
+    cp -t "$builddir" -a include
+    cp -t "$builddir/arch/x86" -a arch/x86/include
+    install -Dt "$builddir/arch/x86/kernel" -m644 arch/x86/kernel/asm-offsets.s
+
+    install -Dt "$builddir/drivers/md" -m644 drivers/md/*.h
+    install -Dt "$builddir/net/mac80211" -m644 net/mac80211/*.h
+
+    # https://bugs.archlinux.org/task/13146
+    install -Dt "$builddir/drivers/media/i2c" -m644 drivers/media/i2c/msp3400-driver.h
+
+    # https://bugs.archlinux.org/task/20402
+    install -Dt "$builddir/drivers/media/usb/dvb-usb" -m644 drivers/media/usb/dvb-usb/*.h
+    install -Dt "$builddir/drivers/media/dvb-frontends" -m644 drivers/media/dvb-frontends/*.h
+    install -Dt "$builddir/drivers/media/tuners" -m644 drivers/media/tuners/*.h
+
+    # https://bugs.archlinux.org/task/71392
+    install -Dt "$builddir/drivers/iio/common/hid-sensors" -m644 drivers/iio/common/hid-sensors/*.h
+
+    echo "Installing KConfig files..."
+    find . -name 'Kconfig*' -exec install -Dm644 {} "$builddir/{}" \;
+
+    echo "Removing unneeded architectures..."
+    local arch
+    for arch in "$builddir"/arch/*/; do
+        [[ $arch = */x86/ ]] && continue
+        echo "Removing $(basename "$arch")"
+        rm -r "$arch"
+    done
+
+    echo "Removing documentation..."
+    rm -r "$builddir/Documentation"
+
+    echo "Removing broken symlinks..."
+    find -L "$builddir" -type l -printf 'Removing %P\n' -delete
+
+    echo "Removing loose objects..."
+    find "$builddir" -type f -name '*.o' -printf 'Removing %P\n' -delete
+
+    echo "Stripping build tools..."
+    local file
+    while read -rd '' file; do
+        case "$(file -bi "$file")" in
+            application/x-sharedlib\;*)      # Libraries (.so)
+                strip -v $STRIP_SHARED "$file" ;;
+            application/x-archive\;*)        # Libraries (.a)
+                strip -v $STRIP_STATIC "$file" ;;
+            application/x-executable\;*)     # Binaries
+                strip -v $STRIP_BINARIES "$file" ;;
+            application/x-pie-executable\;*) # Relocatable binaries
+                strip -v $STRIP_SHARED "$file" ;;
+        esac
+    done < <(find "$builddir" -type f -perm -u+x ! -name vmlinux -print0)
+
+    echo "Stripping vmlinux..."
+    strip -v $STRIP_STATIC "$builddir/vmlinux"
+
+    echo "Adding symlink..."
+    mkdir -p "$pkgdir/usr/src"
+    ln -sr "$builddir" "$pkgdir/usr/src/$pkgbase"
+}
+
+_package-zfs(){
+    pkgdesc="zfs module for the $pkgdesc kernel"
+    depends=('pahole' linux-$pkgsuffix=$_kernver)
+
+    cd ${srcdir}/"zfs"
+    install -dm755 "$pkgdir/usr/lib/modules/${_kernver}-${pkgsuffix}"
+    install -m644 module/*/*.ko "$pkgdir/usr/lib/modules/${_kernver}-${pkgsuffix}"
+    find "$pkgdir" -name '*.ko' -exec zstd --rm -10 {} +
+    #  sed -i -e "s/EXTRAMODULES='.*'/EXTRAMODULES='${pkgver}-${pkgbase}'/" "$startdir/zfs.install"
+}
+
+pkgname=("$pkgbase" "$pkgbase-headers")
+if [ -n "$_build_zfs" ]; then
+    pkgname+=("$pkgbase-zfs")
+fi
+for _p in "${pkgname[@]}"; do
+    eval "package_$_p() {
+    $(declare -f "_package${_p#$pkgbase}")
+    _package${_p#$pkgbase}
+    }"
+done
+
+sha256sums=('1f52eb88e511c3b7f7e3373418195f0db5d2acf9ff7623554371537bf785399a'
+            '6dddd04042e202f9a1929c0a805df1f576ae7701d75bc280c16960ea6e37699a'
+            '0e6ccbf9ee5d5e489ece7f1b5d7b2fa97253fb1a852caf9505857266a5ebb46b'
+            'ce8bf7807b45a27eed05a5e1de5a0bf6293a3bbc2085bacae70cd1368f368d1f'
+            '21951a949d29800cf74d91b317ed4e61e439562148f5a88da9851854c7366dc3'
+            '7a36fe0a53a644ade0ce85f08f9ca2ebaddd47876966b7cc9d4cae8844649271')
