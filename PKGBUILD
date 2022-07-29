@@ -42,8 +42,7 @@ _makenconfig=
 # NUMA is optimized for multi-socket motherboards.
 # A single multi-core CPU actually runs slower with NUMA enabled.
 # See, https://bugs.archlinux.org/task/31187
-# Disabled because nvidia :D
-_NUMAdisable=n
+_NUMAdisable=y
 
 # Compile ONLY used modules to VASTLYreduce the number of modules built
 # and the build time.
@@ -119,8 +118,6 @@ _disable_debug=y
 ## Enable zram/zswap ZSTD compression
 _zstd_swap_compression=y
 
-_nf_cone=y
-
 # Clang LTO mode, only available with the "llvm" compiler - options are "no", "full" or "thin".
 # "full: uses 1 thread for Linking, slow and uses more memory, theoretically with the highest performance gains."
 # "thin: uses multiple threads, faster and uses less memory, may have a lower runtime performance than Full."
@@ -180,17 +177,17 @@ fi
 # ZFS makedepends
 if [ -n "$_build_zfs" ]; then
     makedepends+=(git)
-
 fi
 _patchsource="https://raw.githubusercontent.com/ptr1337/kernel-patches/master/${_major}"
 source=(
     "https://git.kernel.org/torvalds/t/linux-${_major}-${_rcver}.tar.gz"
     "config"
     "auto-cpu-optimization.sh"
-    "${_patchsource}/all/0001-cachyos-base-rc-all-dev.patch")
+    "${_patchsource}/all/0001-cachyos-base-all.patch"
+)
 ## ZFS Support
 if [ -n "$_build_zfs" ]; then
-    source+=("git+https://github.com/openzfs/zfs.git#commit=6c3c5fcfbe27d9193cd131753cc7e47ee2784621")
+    source+=("git+https://github.com/openzfs/zfs.git#commit=98315be03600dee78f5c844ed4ef422098493a24")
 fi
 ## BMQ Scheduler
 if [ "$_cpusched" = "bmq" ]; then
@@ -223,7 +220,7 @@ if [ "$_cpusched" = "hardened" ]; then
 fi
 ## Kernel CFI Patch
 if [ -n "$_use_kcfi" ]; then
-    source+=("${_patchsource}/0001-kcfi.patch")
+    source+=("${_patchsource}/misc/0001-kcfi.patch")
     depends+=(llvm-git llvm-libs-git python)
     BUILD_FLAGS=(
         CC=clang
@@ -233,7 +230,7 @@ if [ -n "$_use_kcfi" ]; then
 fi
 ## bcachefs Support
 if [ -n "$_bcachefs" ]; then
-    source+=("${_patchsource}/0001-bcachefs-after-lru.patch")
+    source+=("${_patchsource}/misc/0001-bcachefs-after-lru.patch")
 fi
 
 # Custom patches (Tkg & kernel-patches)
@@ -254,7 +251,7 @@ if [ -n "$_misc_adds" ]; then
 fi
 
 export KBUILD_BUILD_HOST=archlinux
-export KBUILD_BUILD_USER=$pkgbase
+export KBUILD_BUILD_USER=nightmare-builder
 export KBUILD_BUILD_TIMESTAMP="$(date -Ru${SOURCE_DATE_EPOCH:+d @$SOURCE_DATE_EPOCH})"
 
 prepare() {
@@ -573,13 +570,6 @@ prepare() {
             --set-str DEFAULT_TCP_CONG bbr2
     fi
 
-    ### Enable FULLCONENAT
-    if [ -n "$_nf_cone" ]; then
-        echo "Enabling FULLCONENAT..."
-        scripts/config --module IP_NF_TARGET_FULLCONENAT \
-            --module NETFILTER_XT_TARGET_FULLCONENAT
-    fi
-
     ### Select LRU config
     if [ "$_lru_config" = "standard" ]; then
        echo "Enabling multigenerational LRU..."
@@ -830,7 +820,7 @@ _package() {
         'linux-firmware: firmware images needed for some devices'
         'modprobed-db: Keeps track of EVERY kernel module that has ever been probed - useful for those of us who make localmodconfig'
         'uksmd: Userspace KSM helper daemon'
-    )
+        )
     provides=(VIRTUALBOX-GUEST-MODULES WIREGUARD-MODULE KSMBD-MODULE UKSMD-BUILTIN)
 
     cd ${srcdir}/$_srcname
@@ -943,8 +933,8 @@ _package-zfs(){
     depends=('pahole' linux-$pkgsuffix=$_kernver)
 
     cd ${srcdir}/"zfs"
-    install -dm755 "$pkgdir/usr/lib/modules/${_kernver}-${pkgsuffix}"
-    install -m644 module/*/*.ko "$pkgdir/usr/lib/modules/${_kernver}-${pkgsuffix}"
+	install -dm755 "$pkgdir/usr/lib/modules/${_major}.${_minor}-${_rcver}-${pkgrel}-${pkgsuffix}"
+	install -m644 module/*/*.ko "$pkgdir/usr/lib/modules/${_major}.${_minor}-${_rcver}-${pkgrel}-${pkgsuffix}"
     find "$pkgdir" -name '*.ko' -exec zstd --rm -10 {} +
     #  sed -i -e "s/EXTRAMODULES='.*'/EXTRAMODULES='${pkgver}-${pkgbase}'/" "$startdir/zfs.install"
 }
@@ -961,8 +951,7 @@ for _p in "${pkgname[@]}"; do
 done
 
 sha256sums=('1f52eb88e511c3b7f7e3373418195f0db5d2acf9ff7623554371537bf785399a'
-            '6dddd04042e202f9a1929c0a805df1f576ae7701d75bc280c16960ea6e37699a'
-            '0e6ccbf9ee5d5e489ece7f1b5d7b2fa97253fb1a852caf9505857266a5ebb46b'
+            'd60c162e5eba4099264d5aecac791e70c8666a43cb2a8e923e85b62773063881'
             'ce8bf7807b45a27eed05a5e1de5a0bf6293a3bbc2085bacae70cd1368f368d1f'
-            '21951a949d29800cf74d91b317ed4e61e439562148f5a88da9851854c7366dc3'
+            '82e34fc5f0c7cd1744260100820cca5d92dd8381d3cd7a10bb9da340afd3ab64'
             '7a36fe0a53a644ade0ce85f08f9ca2ebaddd47876966b7cc9d4cae8844649271')

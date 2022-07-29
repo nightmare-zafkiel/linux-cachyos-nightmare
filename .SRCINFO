@@ -28,10 +28,9 @@ pkgbase = linux-cachyos-nightmare
 	source = https://raw.githubusercontent.com/ptr1337/kernel-patches/master/5.19/all/0001-cachyos-base-rt-rc-all-dev.patch
 	source = https://raw.githubusercontent.com/ptr1337/kernel-patches/master/5.19/sched/0001-bore.patch
 	sha256sums = 1f52eb88e511c3b7f7e3373418195f0db5d2acf9ff7623554371537bf785399a
-	sha256sums = 6dddd04042e202f9a1929c0a805df1f576ae7701d75bc280c16960ea6e37699a
-	sha256sums = 0e6ccbf9ee5d5e489ece7f1b5d7b2fa97253fb1a852caf9505857266a5ebb46b
+	sha256sums = d60c162e5eba4099264d5aecac791e70c8666a43cb2a8e923e85b62773063881
 	sha256sums = ce8bf7807b45a27eed05a5e1de5a0bf6293a3bbc2085bacae70cd1368f368d1f
-	sha256sums = 21951a949d29800cf74d91b317ed4e61e439562148f5a88da9851854c7366dc3
+	sha256sums = 82e34fc5f0c7cd1744260100820cca5d92dd8381d3cd7a10bb9da340afd3ab64
 	sha256sums = 7a36fe0a53a644ade0ce85f08f9ca2ebaddd47876966b7cc9d4cae8844649271
 
 pkgname = linux-cachyos-nightmare
