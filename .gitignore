@@ -1,6 +1,8 @@
 # Source code
 *.tar.gz
+*.tar.xz
 src/
+zfs/
 # Arch Linux packages
 *.tar.zst
 pkg/

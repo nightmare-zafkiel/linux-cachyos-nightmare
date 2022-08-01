@@ -22,11 +22,12 @@ _tkgify=y
 # You can pass a default set of kernel command line options here - example: "intel_pstate=passive nowatchdog amdgpu.ppfeaturemask=0xfffd7fff mitigations=off"
 _custom_commandline="intel_pstate=passive"
 
-# Set to "true" to use ACS override patch - https://wiki.archlinux.org/index.php/PCI_passthrough_via_OVMF#Bypassing_the_IOMMU_groups_.28ACS_override_patch.29 - Kernel default is "false"
-_acs_override=y
-
-# Set to "true" to enable misc additions - May contain temporary fixes pending upstream or changes that can break on non-Arch - Kernel default is "true"
-_misc_adds=y
+# Merged in CachyOS base patch
+# # Set to "true" to use ACS override patch - https://wiki.archlinux.org/index.php/PCI_passthrough_via_OVMF#Bypassing_the_IOMMU_groups_.28ACS_override_patch.29 - Kernel default is "false"
+# _acs_override=y
+#
+# # Set to "true" to enable misc additions - May contain temporary fixes pending upstream or changes that can break on non-Arch - Kernel default is "true"
+# _misc_adds=y
 
 # Set to "true" to disable FUNCTION_TRACER/GRAPH_TRACER, lowering overhead but limiting debugging and analyzing of kernel functions - Kernel default is "false"
 _ftracedisable=y
@@ -130,8 +131,8 @@ _use_llvm_lto=full
 # function address equality.
 # ATTENTION!: you do need a patched llvm for the usage of kcfi,
 # you can find a patched llvm-git in the cachyos-repo's.
-# The packagename is called "llvm-kcfi"
-_use_kcfi=
+# The packagename is called "llvm-git"
+_use_kcfi=y
 
 # Build the zfs module builtin in to the kernel
 _build_zfs=
@@ -149,11 +150,20 @@ pkgbase=linux-$pkgsuffix
 _major=5.19
 _minor=0
 #_minorc=$((_minor+1))
-_rcver=rc8
-pkgver=${_major}.${_rcver}
-#_stable=${_major}.${_minor}
-#_stable=${_major}
-_stable=${_major}-${_rcver}
+
+## Release Candidate
+
+# _rcver=rc8
+# pkgver=${_major}.${_rcver}
+# _stable=${_major}-${_rcver}
+
+## Stable
+
+pkgver=${_major}.${_minor}
+_stable=${_major}
+# _stable=${_major}.${_minor}
+
+## Package info
 _srcname=linux-${_stable}
 #_srcname=linux-${_major}
 pkgdesc='Linux BMQ scheduler Kernel by CachyOS and with some other patches and other improvements'
@@ -180,14 +190,14 @@ if [ -n "$_build_zfs" ]; then
 fi
 _patchsource="https://raw.githubusercontent.com/ptr1337/kernel-patches/master/${_major}"
 source=(
-    "https://git.kernel.org/torvalds/t/linux-${_major}-${_rcver}.tar.gz"
+    "https://cdn.kernel.org/pub/linux/kernel/v${pkgver%%.*}.x/${_srcname}.tar.xz"
     "config"
     "auto-cpu-optimization.sh"
     "${_patchsource}/all/0001-cachyos-base-all.patch"
 )
 ## ZFS Support
 if [ -n "$_build_zfs" ]; then
-    source+=("git+https://github.com/openzfs/zfs.git#commit=98315be03600dee78f5c844ed4ef422098493a24")
+    source+=("git+https://github.com/openzfs/zfs.git#commit=17512aba0c33f73b74e5bd10f11e6d41c10f709f")
 fi
 ## BMQ Scheduler
 if [ "$_cpusched" = "bmq" ]; then
@@ -234,21 +244,24 @@ if [ -n "$_bcachefs" ]; then
 fi
 
 # Custom patches (Tkg & kernel-patches)
-if [ -n "$_tkgify" ]; then
-    # Patches for WRITE_WATCH support in Wine.
-    source+=(
-        "https://raw.githubusercontent.com/Frogging-Family/linux-tkg/master/linux-tkg-patches/5.19/0001-mm-Support-soft-dirty-flag-reset-for-VA-range.patch"
-        "https://raw.githubusercontent.com/Frogging-Family/linux-tkg/master/linux-tkg-patches/5.19/0002-mm-Support-soft-dirty-flag-read-with-reset.patch"
-    )
-fi
+# if [ -n "$_tkgify" ]; then
+#     # Merged in CachyOS base patch
+#     # Patches for WRITE_WATCH support in Wine
+#     source+=(
+#         "https://raw.githubusercontent.com/Frogging-Family/linux-tkg/master/linux-tkg-patches/5.19/0001-mm-Support-soft-dirty-flag-reset-for-VA-range.patch"
+#         "https://raw.githubusercontent.com/Frogging-Family/linux-tkg/master/linux-tkg-patches/5.19/0002-mm-Support-soft-dirty-flag-read-with-reset.patch"
+#     )
+# fi
 
-if [ -n "$_acs_override" ]; then
-    source+=("https://raw.githubusercontent.com/Frogging-Family/linux-tkg/master/linux-tkg-patches/5.19/0006-add-acs-overrides_iommu.patch")
-fi
+# Merged in CachyOS base patch
+# if [ -n "$_acs_override" ]; then
+#     source+=("https://raw.githubusercontent.com/Frogging-Family/linux-tkg/master/linux-tkg-patches/5.19/0006-add-acs-overrides_iommu.patch")
+# fi
 
-if [ -n "$_misc_adds" ]; then
-    source+=("https://raw.githubusercontent.com/Frogging-Family/linux-tkg/master/linux-tkg-patches/5.19/0012-misc-additions.patch")
-fi
+# Merged in CachyOS base patch
+# if [ -n "$_misc_adds" ]; then
+#     source+=("https://raw.githubusercontent.com/Frogging-Family/linux-tkg/master/linux-tkg-patches/5.19/0012-misc-additions.patch")
+# fi
 
 export KBUILD_BUILD_HOST=archlinux
 export KBUILD_BUILD_USER=nightmare-builder
@@ -951,7 +964,7 @@ for _p in "${pkgname[@]}"; do
 done
 
 sha256sums=('1f52eb88e511c3b7f7e3373418195f0db5d2acf9ff7623554371537bf785399a'
-            'd60c162e5eba4099264d5aecac791e70c8666a43cb2a8e923e85b62773063881'
+            '09a1f39bb2c64a15e1e59add809fe9e4a6d67ef212f6043c582f90e2deb1fbfe'
             'ce8bf7807b45a27eed05a5e1de5a0bf6293a3bbc2085bacae70cd1368f368d1f'
-            '82e34fc5f0c7cd1744260100820cca5d92dd8381d3cd7a10bb9da340afd3ab64'
-            '7a36fe0a53a644ade0ce85f08f9ca2ebaddd47876966b7cc9d4cae8844649271')
+            'f053ab9b44b1e5164f6ac4f0216fe54a2589a35aee15169b0dea11669705a2af'
+            '0fe7f1698639df033709c6d32e651d378fc6e320dfc6387f8aee83d9ed0231a8')
