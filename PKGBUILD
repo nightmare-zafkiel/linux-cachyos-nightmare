@@ -132,7 +132,8 @@ _use_llvm_lto=full
 # ATTENTION!: you do need a patched llvm for the usage of kcfi,
 # you can find a patched llvm-git in the cachyos-repo's.
 # The packagename is called "llvm-git"
-_use_kcfi=y
+# Disabled because Hello nvidia :D (Driver crashes with kCFI kernel)
+_use_kcfi=
 
 # Build the zfs module builtin in to the kernel
 _build_zfs=
@@ -172,7 +173,7 @@ _kernver=$pkgver-$pkgrel
 arch=('x86_64' 'x86_64_v3')
 url="https://github.com/CachyOS/linux-cachyos"
 license=('GPL2')
-options=('!strip')
+options=('!strip' 'bolt')
 makedepends=('bc' 'libelf' 'pahole' 'cpio' 'perl' 'tar' 'xz' 'zstd' 'gcc' 'gcc-libs' 'glibc' 'binutils' 'make' 'patch')
 # LLVM makedepends
 if [ -n "$_use_llvm_lto" ]; then
@@ -193,7 +194,7 @@ source=(
     "https://cdn.kernel.org/pub/linux/kernel/v${pkgver%%.*}.x/${_srcname}.tar.xz"
     "config"
     "auto-cpu-optimization.sh"
-    "${_patchsource}/all/0001-cachyos-base-all.patch"
+    "${_patchsource}/all/0001-cachyos-base-all-dev.patch"
 )
 ## ZFS Support
 if [ -n "$_build_zfs" ]; then
@@ -201,11 +202,11 @@ if [ -n "$_build_zfs" ]; then
 fi
 ## BMQ Scheduler
 if [ "$_cpusched" = "bmq" ]; then
-    source+=("${_patchsource}/sched/0001-prjc.patch")
+    source+=("${_patchsource}/sched/0001-prjc-cachy.patch")
 fi
 ## PDS Scheduler
 if [ "$_cpusched" = "pds" ]; then
-    source+=("${_patchsource}/sched/0001-prjc.patch")
+    source+=("${_patchsource}/sched/0001-prjc-cachy.patch")
 fi
 ## BORE Scheduler
 if [ "$_cpusched" = "bore" ]; then
@@ -221,7 +222,7 @@ if [ "$_cpusched" = "cacule-rdb" ]; then
 fi
 #ä TT Scheduler
 if [ "$_cpusched" = "tt" ]; then
-    source+=("${_patchsource}/sched/0001-tt-cachy.patch")
+    source+=("${_patchsource}/sched/0001-tt-cachy-dev.patch")
 fi
 ## Hardened Patches with BORE Scheduler
 if [ "$_cpusched" = "hardened" ]; then
