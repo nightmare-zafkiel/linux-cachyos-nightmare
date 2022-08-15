@@ -1,4 +1,4 @@
-# Maintainer: Peter Jung ptr1337 <admin@ptr1337.dev> && Piotr Gorski <lucjan.lucjanov@gmail.com>
+# Maintainer: Peter Jung ptr1337 <admin@ptr1337.dev> && Piotr Gorski <piotrgorski@cachyos.org>
 # Contributor: Jan Alexander Steffens (heftig) <jan.steffens@gmail.com>
 # Contributor: Tobias Powalowski <tpowa@archlinux.org>
 # Contributor: Thomas Baechler <thomas@archlinux.org>
@@ -13,7 +13,7 @@
 # 'cfs' - select 'Completely Fair Scheduler'
 # 'tt' - select 'Task Type Scheduler by Hamad Marri'
 # 'hardened' - select 'BORE Scheduler hardened' ## kernel with hardened config and hardening patches with the bore scheduler
-_cpusched='bmq'
+_cpusched='bore'
 
 ### TkG patches
 # Apply Tkg default settings
@@ -39,6 +39,15 @@ _noccache="false"
 
 ### Tweak kernel options prior to a build via nconfig
 _makenconfig=
+
+### Tweak kernel options prior to a build via menuconfig
+_makemenuconfig=
+
+### Tweak kernel options prior to a build via xconfig
+_makexconfig=
+
+### Tweak kernel options prior to a build via gconfig
+_makegconfig=
 
 # NUMA is optimized for multi-socket motherboards.
 # A single multi-core CPU actually runs slower with NUMA enabled.
@@ -119,6 +128,14 @@ _disable_debug=y
 ## Enable zram/zswap ZSTD compression
 _zstd_swap_compression=y
 
+### Selecting the ZSTD kernel and modules compression level
+# ATTENTION - one of two predefined values should be selected!
+# 'ultra' - highest compression ratio
+# 'normal' - standard compression ratio
+# WARNING: the ultra settings can sometimes
+# be counterproductive in both size and speed.
+_zstd_level_value='normal'
+
 # Clang LTO mode, only available with the "llvm" compiler - options are "no", "full" or "thin".
 # "full: uses 1 thread for Linking, slow and uses more memory, theoretically with the highest performance gains."
 # "thin: uses multiple threads, faster and uses less memory, may have a lower runtime performance than Full."
@@ -149,7 +166,7 @@ _anbox=y
 pkgsuffix=cachyos-nightmare
 pkgbase=linux-$pkgsuffix
 _major=5.19
-_minor=0
+_minor=1
 #_minorc=$((_minor+1))
 
 ## Release Candidate
@@ -161,14 +178,14 @@ _minor=0
 ## Stable
 
 pkgver=${_major}.${_minor}
-_stable=${_major}
-# _stable=${_major}.${_minor}
+# _stable=${_major}
+_stable=${_major}.${_minor}
 
 ## Package info
 _srcname=linux-${_stable}
 #_srcname=linux-${_major}
-pkgdesc='Linux BMQ scheduler Kernel by CachyOS and with some other patches and other improvements'
-pkgrel=1
+pkgdesc='Linux BORE scheduler Kernel by CachyOS and with some other patches and other improvements'
+pkgrel=2
 _kernver=$pkgver-$pkgrel
 arch=('x86_64' 'x86_64_v3')
 url="https://github.com/CachyOS/linux-cachyos"
@@ -189,7 +206,7 @@ fi
 if [ -n "$_build_zfs" ]; then
     makedepends+=(git)
 fi
-_patchsource="https://raw.githubusercontent.com/ptr1337/kernel-patches/master/${_major}"
+_patchsource="https://raw.githubusercontent.com/cachyos/kernel-patches/master/${_major}"
 source=(
     "https://cdn.kernel.org/pub/linux/kernel/v${pkgver%%.*}.x/${_srcname}.tar.xz"
     "config"
@@ -198,7 +215,7 @@ source=(
 )
 ## ZFS Support
 if [ -n "$_build_zfs" ]; then
-    source+=("git+https://github.com/openzfs/zfs.git#commit=17512aba0c33f73b74e5bd10f11e6d41c10f709f")
+    source+=("git+https://github.com/openzfs/zfs.git#commit=db5fd16f0b7fd5bd5e19350829c46d526fed6d71")
 fi
 ## BMQ Scheduler
 if [ "$_cpusched" = "bmq" ]; then
@@ -488,10 +505,7 @@ prepare() {
     if [ -n "$_per_gov" ]; then
         echo "Setting performance governor..."
         scripts/config --disable CPU_FREQ_DEFAULT_GOV_SCHEDUTIL \
-            --enable CPU_FREQ_DEFAULT_GOV_PERFORMANCE \
-            --enable PCIEASPM \
-            --enable PCIEASPM_PERFORMANCE \
-            --enable PCIE_BUS_PERFORMANCE
+            --enable CPU_FREQ_DEFAULT_GOV_PERFORMANCE
     fi
 
     ### Select tick type
@@ -694,15 +708,37 @@ prepare() {
 
     ### Enable ZSTD swap/zram compression
     if [ -n "$_zstd_swap_compression" ]; then
-        echo "Enabling zram ZSTD compression..."
-        scripts/config --disable ZRAM_DEF_COMP_LZORLE \
-            --enable ZRAM_DEF_COMP_ZSTD \
-            --set-str ZRAM_DEF_COMP zstd \
-            --disable ZSWAP_COMPRESSOR_DEFAULT_LZ4 \
-            --enable ZSWAP_COMPRESSOR_DEFAULT_ZSTD \
-            --set-str ZSWAP_COMPRESSOR_DEFAULT zstd \
-            --enable ZRAM_ENTROPY \
-            --set-val ZRAM_ENTROPY_THRESHOLD 100000
+        echo "Enabling zram/swap ZSTD compression..."
+        scripts/config --disable CONFIG_ZRAM_DEF_COMP_LZORLE \
+            --enable CONFIG_ZRAM_DEF_COMP_ZSTD \
+            --set-str CONFIG_ZRAM_DEF_COMP zstd \
+            --disable CONFIG_ZSWAP_COMPRESSOR_DEFAULT_LZ4 \
+            --enable CONFIG_ZSWAP_COMPRESSOR_DEFAULT_ZSTD \
+            --set-str CONFIG_ZSWAP_COMPRESSOR_DEFAULT zstd \
+            --enable CONFIG_ZRAM_ENTROPY \
+            --set-val CONFIG_ZRAM_ENTROPY_THRESHOLD 100000
+    fi
+
+    ### Selecting the ZSTD modules and kernel compression level
+    if [ "$_zstd_level_value" = "ultra" ]; then
+        echo "Enabling highest ZSTD modules and kernel compression ratio..."
+        scripts/config --set-val CONFIG_MODULE_COMPRESS_ZSTD_LEVEL 19 \
+            --enable CONFIG_MODULE_COMPRESS_ZSTD_ULTRA \
+            --set-val CONFIG_MODULE_COMPRESS_ZSTD_LEVEL_ULTRA 22 \
+            --set-val CONFIG_ZSTD_COMP_VAL 22
+    elif [ "$_zstd_level_value" = "normal" ]; then
+        echo "Enabling standard ZSTD modules and kernel compression ratio..."
+        scripts/config --set-val CONFIG_MODULE_COMPRESS_ZSTD_LEVEL 9 \
+            --disable CONFIG_MODULE_COMPRESS_ZSTD_ULTRA \
+            --set-val CONFIG_ZSTD_COMP_VAL 19
+    else
+        if [ -n "$_zstd_level_value" ]; then
+            error "The value $_zstd_level_value is invalid. Choose the correct one again."
+        else
+            error "The value is empty. Choose the correct one again."
+        fi
+        error "Selecting the ZSTD modules and kernel compression level failed!"
+        exit
     fi
 
     ### Disable DEBUG
@@ -783,6 +819,15 @@ prepare() {
 
     ### Running make nconfig
     [[ -z "$_makenconfig" ]] ||  make ${BUILD_FLAGS[*]} nconfig
+
+    ### Running make menuconfig
+    [[ -z "$_makemenuconfig" ]] ||  make ${BUILD_FLAGS[*]} menuconfig
+
+    ### Running make xconfig
+    [[ -z "$_makexconfig" ]] ||  make ${BUILD_FLAGS[*]} xconfig
+
+    ### Running make gconfig
+    [[ -z "$_makegconfig" ]] ||  make ${BUILD_FLAGS[*]} gconfig
 
     ### Save configuration for later reuse
     echo "Save configuration for later reuse..."
@@ -967,5 +1012,5 @@ done
 sha256sums=('1f52eb88e511c3b7f7e3373418195f0db5d2acf9ff7623554371537bf785399a'
             '09a1f39bb2c64a15e1e59add809fe9e4a6d67ef212f6043c582f90e2deb1fbfe'
             'ce8bf7807b45a27eed05a5e1de5a0bf6293a3bbc2085bacae70cd1368f368d1f'
-            'f053ab9b44b1e5164f6ac4f0216fe54a2589a35aee15169b0dea11669705a2af'
+            'c04623bfb274c2422f6286c8befd52b835d2da9f953b1c66007bd851d2756365'
             '0fe7f1698639df033709c6d32e651d378fc6e320dfc6387f8aee83d9ed0231a8')
