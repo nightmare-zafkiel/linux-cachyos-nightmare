@@ -13,7 +13,7 @@
 # 'cfs' - select 'Completely Fair Scheduler'
 # 'tt' - select 'Task Type Scheduler by Hamad Marri'
 # 'hardened' - select 'BORE Scheduler hardened' ## kernel with hardened config and hardening patches with the bore scheduler
-_cpusched='bore'
+_cpusched='tt'
 
 ### TkG patches
 # Apply Tkg default settings
@@ -35,7 +35,7 @@ _ftracedisable=y
 ### BUILD OPTIONS
 # Set these variables to ANYTHING that is not null to enable them
 
-_noccache="false"
+_noccache=
 
 ### Tweak kernel options prior to a build via nconfig
 _makenconfig=
@@ -165,27 +165,27 @@ _anbox=y
 
 pkgsuffix=cachyos-nightmare
 pkgbase=linux-$pkgsuffix
-_major=5.19
+_major=6.0
 _minor=1
 #_minorc=$((_minor+1))
 
 ## Release Candidate
 
-# _rcver=rc8
-# pkgver=${_major}.${_rcver}
-# _stable=${_major}-${_rcver}
+_rcver=rc1
+pkgver=${_major}.${_rcver}
+_stable=${_major}-${_rcver}
 
 ## Stable
 
-pkgver=${_major}.${_minor}
+# pkgver=${_major}.${_minor}
 # _stable=${_major}
-_stable=${_major}.${_minor}
+# _stable=${_major}.${_minor}
 
 ## Package info
 _srcname=linux-${_stable}
 #_srcname=linux-${_major}
-pkgdesc='Linux BORE scheduler Kernel by CachyOS and with some other patches and other improvements'
-pkgrel=2
+pkgdesc='linux-cachyos (BORE/LTO) with some tweaks'
+pkgrel=1
 _kernver=$pkgver-$pkgrel
 arch=('x86_64' 'x86_64_v3')
 url="https://github.com/CachyOS/linux-cachyos"
@@ -208,10 +208,10 @@ if [ -n "$_build_zfs" ]; then
 fi
 _patchsource="https://raw.githubusercontent.com/cachyos/kernel-patches/master/${_major}"
 source=(
-    "https://cdn.kernel.org/pub/linux/kernel/v${pkgver%%.*}.x/${_srcname}.tar.xz"
+    "https://github.com/torvalds/linux/archive/refs/tags/v${_major}-${_rcver}.tar.gz"
     "config"
     "auto-cpu-optimization.sh"
-    "${_patchsource}/all/0001-cachyos-base-all-dev.patch"
+    "${_patchsource}/all/0001-cachyos-base-all.patch"
 )
 ## ZFS Support
 if [ -n "$_build_zfs" ]; then
@@ -239,7 +239,7 @@ if [ "$_cpusched" = "cacule-rdb" ]; then
 fi
 #ä TT Scheduler
 if [ "$_cpusched" = "tt" ]; then
-    source+=("${_patchsource}/sched/0001-tt-cachy-dev.patch")
+    source+=("${_patchsource}/sched/0001-tt-cachy.patch")
 fi
 ## Hardened Patches with BORE Scheduler
 if [ "$_cpusched" = "hardened" ]; then
@@ -904,7 +904,7 @@ _package() {
 }
 
 _package-headers() {
-    pkgdesc="Headers and scripts for building modules for the $pkgdesc kernel"
+    pkgdesc="Headers and scripts for building modules in $pkgbase"
     depends=('pahole' linux-${pkgsuffix} )
 
     cd ${srcdir}/${_srcname}
@@ -1009,8 +1009,8 @@ for _p in "${pkgname[@]}"; do
     }"
 done
 
-sha256sums=('1f52eb88e511c3b7f7e3373418195f0db5d2acf9ff7623554371537bf785399a'
-            '09a1f39bb2c64a15e1e59add809fe9e4a6d67ef212f6043c582f90e2deb1fbfe'
+sha256sums=('451787a0461abe26fce8af5740ac20b81610bf241ba1197be77ee9ebd3fc71ad'
+            'f4aedb0547cc412f6ebffd8bb65e17e8d8c0b6835957d308ebdb44630276c37a'
             'ce8bf7807b45a27eed05a5e1de5a0bf6293a3bbc2085bacae70cd1368f368d1f'
-            'c04623bfb274c2422f6286c8befd52b835d2da9f953b1c66007bd851d2756365'
-            '0fe7f1698639df033709c6d32e651d378fc6e320dfc6387f8aee83d9ed0231a8')
+            '3aee411714000d34791085ed682cd5730aefe2d4d12187eee7cc21eb2d61d8ac'
+            'b9840635873a03b564cdefa813a3416e9ea08847424e6c284d0f838a99616625')
