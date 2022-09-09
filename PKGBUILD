@@ -171,7 +171,7 @@ _minor=0
 
 ## Release Candidate
 
-_rcver=rc3
+_rcver=rc4
 pkgver=${_major}.${_rcver}
 _stable=${_major}-${_rcver}
 
@@ -184,7 +184,7 @@ _stable=${_major}-${_rcver}
 ## Package info
 _srcname=linux-${_stable}
 #_srcname=linux-${_major}
-pkgdesc='linux-cachyos (BORE/LTO) with some tweaks'
+pkgdesc='linux-cachyos (BMQ/LTO) with some tweaks'
 pkgrel=1
 _kernver=$pkgver-$pkgrel
 arch=('x86_64' 'x86_64_v3')
@@ -286,6 +286,7 @@ export KBUILD_BUILD_USER=nightmare-builder
 export KBUILD_BUILD_TIMESTAMP="$(date -Ru${SOURCE_DATE_EPOCH:+d @$SOURCE_DATE_EPOCH})"
 
 cleanup() {
+    cd ../..
     echo "Removing patches..."
     rm -rf *.patch
     echo "Removing generated config..."

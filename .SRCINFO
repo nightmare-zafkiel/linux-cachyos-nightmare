@@ -1,6 +1,6 @@
 pkgbase = linux-cachyos-nightmare
 	pkgdesc = linux-cachyos-nightmare
-	pkgver = 6.0.rc3
+	pkgver = 6.0.rc4
 	pkgrel = 1
 	url = https://github.com/CachyOS/linux-cachyos
 	arch = x86_64
