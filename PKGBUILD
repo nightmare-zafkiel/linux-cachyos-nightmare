@@ -13,7 +13,7 @@
 # 'cfs' - select 'Completely Fair Scheduler'
 # 'tt' - select 'Task Type Scheduler by Hamad Marri'
 # 'hardened' - select 'BORE Scheduler hardened' ## kernel with hardened config and hardening patches with the bore scheduler
-_cpusched='tt'
+_cpusched='bmq'
 
 ### TkG patches
 # Apply Tkg default settings
@@ -104,7 +104,7 @@ _kyber_disable=y
 _lru_config='standard'
 
 ## Enable DAMON
-_damon=y
+_damon=
 
 ## Enable Linux Random Number Generator
 _lrng_enable=y
@@ -166,12 +166,12 @@ _anbox=y
 pkgsuffix=cachyos-nightmare
 pkgbase=linux-$pkgsuffix
 _major=6.0
-_minor=1
+_minor=0
 #_minorc=$((_minor+1))
 
 ## Release Candidate
 
-_rcver=rc1
+_rcver=rc3
 pkgver=${_major}.${_rcver}
 _stable=${_major}-${_rcver}
 
@@ -219,11 +219,11 @@ if [ -n "$_build_zfs" ]; then
 fi
 ## BMQ Scheduler
 if [ "$_cpusched" = "bmq" ]; then
-    source+=("${_patchsource}/sched/0001-prjc-cachy.patch")
+    source+=("${_patchsource}/sched/0001-prjc.patch")
 fi
 ## PDS Scheduler
 if [ "$_cpusched" = "pds" ]; then
-    source+=("${_patchsource}/sched/0001-prjc-cachy.patch")
+    source+=("${_patchsource}/sched/0001-prjc.patch")
 fi
 ## BORE Scheduler
 if [ "$_cpusched" = "bore" ]; then
@@ -231,11 +231,11 @@ if [ "$_cpusched" = "bore" ]; then
 fi
 ## CacULE Scheduler
 if [ "$_cpusched" = "cacule" ]; then
-    source+=("${_patchsource}/sched/0001-cacULE-cachy.patch")
+    source+=("${_patchsource}/sched/0001-cacULE.patch")
 fi
 ## CacULE-RDB Scheduler
 if [ "$_cpusched" = "cacule-rdb" ]; then
-    source+=("${_patchsource}/sched/0001-cacULE-cachy.patch")
+    source+=("${_patchsource}/sched/0001-cacULE.patch")
 fi
 #ä TT Scheduler
 if [ "$_cpusched" = "tt" ]; then
@@ -284,6 +284,17 @@ fi
 export KBUILD_BUILD_HOST=archlinux
 export KBUILD_BUILD_USER=nightmare-builder
 export KBUILD_BUILD_TIMESTAMP="$(date -Ru${SOURCE_DATE_EPOCH:+d @$SOURCE_DATE_EPOCH})"
+
+cleanup() {
+    echo "Removing patches..."
+    rm -rf *.patch
+    echo "Removing generated config..."
+    rm -rf config-*
+    echo "Removing source..."
+    rm -rf src
+}
+
+trap cleanup EXIT
 
 prepare() {
 
