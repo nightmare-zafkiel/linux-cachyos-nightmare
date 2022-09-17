@@ -1,7 +1,13 @@
-# Maintainer: Peter Jung ptr1337 <admin@ptr1337.dev> && Piotr Gorski <piotrgorski@cachyos.org>
+# Maintainer: Peter Jung ptr1337 <admin@ptr1337.dev> && Piotr Gorski <lucjan.lucjanov@gmail.com>
 # Contributor: Jan Alexander Steffens (heftig) <jan.steffens@gmail.com>
 # Contributor: Tobias Powalowski <tpowa@archlinux.org>
 # Contributor: Thomas Baechler <thomas@archlinux.org>
+
+### Selecting CachyOS config
+# ATTENTION - one of two predefined values should be selected!
+# 'yes' - enable CachyOS config
+# 'no' - disable CachyOS config
+_cachy_config='yes'
 
 ### Selecting the CPU scheduler
 # ATTENTION - one of seven predefined values should be selected!
@@ -13,7 +19,7 @@
 # 'cfs' - select 'Completely Fair Scheduler'
 # 'tt' - select 'Task Type Scheduler by Hamad Marri'
 # 'hardened' - select 'BORE Scheduler hardened' ## kernel with hardened config and hardening patches with the bore scheduler
-_cpusched='bmq'
+_cpusched='bore'
 
 ### TkG patches
 # Apply Tkg default settings
@@ -22,12 +28,11 @@ _tkgify=y
 # You can pass a default set of kernel command line options here - example: "intel_pstate=passive nowatchdog amdgpu.ppfeaturemask=0xfffd7fff mitigations=off"
 _custom_commandline="intel_pstate=passive"
 
-# Merged in CachyOS base patch
-# # Set to "true" to use ACS override patch - https://wiki.archlinux.org/index.php/PCI_passthrough_via_OVMF#Bypassing_the_IOMMU_groups_.28ACS_override_patch.29 - Kernel default is "false"
-# _acs_override=y
+# Set to "true" to use ACS override patch - https://wiki.archlinux.org/index.php/PCI_passthrough_via_OVMF#Bypassing_the_IOMMU_groups_.28ACS_override_patch.29 - Kernel default is "false"
+_acs_override=y
 #
-# # Set to "true" to enable misc additions - May contain temporary fixes pending upstream or changes that can break on non-Arch - Kernel default is "true"
-# _misc_adds=y
+# Set to "true" to enable misc additions - May contain temporary fixes pending upstream or changes that can break on non-Arch - Kernel default is "true"
+_misc_adds=y
 
 # Set to "true" to disable FUNCTION_TRACER/GRAPH_TRACER, lowering overhead but limiting debugging and analyzing of kernel functions - Kernel default is "false"
 _ftracedisable=y
@@ -103,6 +108,13 @@ _kyber_disable=y
 # 'none' - disable multigenerational LRU
 _lru_config='standard'
 
+### Enable per-VMA locking
+# ATTENTION - one of three predefined values should be selected!
+# 'standard' - enable per-VMA locking
+# 'stats' - enable per-VMA locking with stats
+# 'none' - disable per-VMA locking
+_vma_config='standard'
+
 ## Enable DAMON
 _damon=
 
@@ -158,6 +170,9 @@ _build_zfs=
 # Enable bcachefs
 _bcachefs=
 
+# Enable RT kernel (doesn't work with tt/cacule/prjc)
+_rtkernel=y
+
 # Enable Anbox support
 _anbox=y
 
@@ -166,12 +181,11 @@ _anbox=y
 pkgsuffix=cachyos-nightmare
 pkgbase=linux-$pkgsuffix
 _major=6.0
-_minor=0
-#_minorc=$((_minor+1))
+# _minor=0
 
 ## Release Candidate
 
-_rcver=rc4
+_rcver=rc5
 pkgver=${_major}.${_rcver}
 _stable=${_major}-${_rcver}
 
@@ -184,7 +198,7 @@ _stable=${_major}-${_rcver}
 ## Package info
 _srcname=linux-${_stable}
 #_srcname=linux-${_major}
-pkgdesc='linux-cachyos (BMQ/LTO) with some tweaks'
+pkgdesc="linux-cachyos (${_cpusched}/LTO) with some tweaks"
 pkgrel=1
 _kernver=$pkgver-$pkgrel
 arch=('x86_64' 'x86_64_v3')
@@ -209,7 +223,7 @@ fi
 _patchsource="https://raw.githubusercontent.com/cachyos/kernel-patches/master/${_major}"
 source=(
     "https://github.com/torvalds/linux/archive/refs/tags/v${_major}-${_rcver}.tar.gz"
-    "config"
+    "config" "config_rt"
     "auto-cpu-optimization.sh"
     "${_patchsource}/all/0001-cachyos-base-all.patch"
 )
@@ -231,11 +245,11 @@ if [ "$_cpusched" = "bore" ]; then
 fi
 ## CacULE Scheduler
 if [ "$_cpusched" = "cacule" ]; then
-    source+=("${_patchsource}/sched/0001-cacULE.patch")
+    source+=("${_patchsource}/sched/0001-cacULE-cachy.patch")
 fi
 ## CacULE-RDB Scheduler
 if [ "$_cpusched" = "cacule-rdb" ]; then
-    source+=("${_patchsource}/sched/0001-cacULE.patch")
+    source+=("${_patchsource}/sched/0001-cacULE-cachy.patch")
 fi
 #ä TT Scheduler
 if [ "$_cpusched" = "tt" ]; then
@@ -261,25 +275,32 @@ if [ -n "$_bcachefs" ]; then
     source+=("${_patchsource}/misc/0001-bcachefs-after-lru.patch")
 fi
 
+## O3
+# if [ -n "$_cc_harder" ]; then
+#     source+=("https://raw.githubusercontent.com/Frogging-Family/linux-tkg/master/linux-tkg-patches/6.0/0013-optimize_harder_O3.patch")
+# fi
+
+## rt kernel
+if [ -n "$_rtkernel" ]; then
+    source+=("${_patchsource}/misc/0001-rt-rc.patch")
+fi
+
 # Custom patches (Tkg & kernel-patches)
 # if [ -n "$_tkgify" ]; then
-#     # Merged in CachyOS base patch
 #     # Patches for WRITE_WATCH support in Wine
 #     source+=(
-#         "https://raw.githubusercontent.com/Frogging-Family/linux-tkg/master/linux-tkg-patches/5.19/0001-mm-Support-soft-dirty-flag-reset-for-VA-range.patch"
-#         "https://raw.githubusercontent.com/Frogging-Family/linux-tkg/master/linux-tkg-patches/5.19/0002-mm-Support-soft-dirty-flag-read-with-reset.patch"
+#         "https://raw.githubusercontent.com/Frogging-Family/linux-tkg/master/linux-tkg-patches/6.0/0001-mm-Support-soft-dirty-flag-reset-for-VA-range.patch"
+#         "https://raw.githubusercontent.com/Frogging-Family/linux-tkg/master/linux-tkg-patches/6.0/0002-mm-Support-soft-dirty-flag-read-with-reset.patch"
 #     )
 # fi
 
-# Merged in CachyOS base patch
-# if [ -n "$_acs_override" ]; then
-#     source+=("https://raw.githubusercontent.com/Frogging-Family/linux-tkg/master/linux-tkg-patches/5.19/0006-add-acs-overrides_iommu.patch")
-# fi
+if [ -n "$_acs_override" ]; then
+    source+=("https://raw.githubusercontent.com/Frogging-Family/linux-tkg/master/linux-tkg-patches/6.0/0006-add-acs-overrides_iommu.patch")
+fi
 
-# Merged in CachyOS base patch
-# if [ -n "$_misc_adds" ]; then
-#     source+=("https://raw.githubusercontent.com/Frogging-Family/linux-tkg/master/linux-tkg-patches/5.19/0012-misc-additions.patch")
-# fi
+if [ -n "$_misc_adds" ]; then
+    source+=("https://raw.githubusercontent.com/Frogging-Family/linux-tkg/master/linux-tkg-patches/6.0/0012-misc-additions.patch")
+fi
 
 export KBUILD_BUILD_HOST=archlinux
 export KBUILD_BUILD_USER=nightmare-builder
@@ -287,11 +308,8 @@ export KBUILD_BUILD_TIMESTAMP="$(date -Ru${SOURCE_DATE_EPOCH:+d @$SOURCE_DATE_EP
 
 cleanup() {
     cd ../..
-    echo "Removing patches..."
     rm -rf *.patch
-    echo "Removing generated config..."
     rm -rf config-*
-    echo "Removing source..."
     rm -rf src
 }
 
@@ -316,7 +334,11 @@ prepare() {
     done
 
     echo "Setting config..."
-    cp ../config .config
+    if [ -n "$_rtkernel" ]; then
+        cp ../config_rt .config
+    else
+        cp ../config .config
+    fi
 
     ### Select CPU optimization
     if [ -n "$_processor_opt" ]; then
@@ -329,6 +351,34 @@ prepare() {
     ### Use autooptimization
     if [ -n "$_use_auto_optimization" ]; then
         "${srcdir}"/auto-cpu-optimization.sh
+    fi
+
+        ### Selecting CachyOS config
+    if [ "$_cachy_config" = "yes" ]; then
+        echo "Enabling CachyOS config..."
+        scripts/config --enable CACHY
+    elif [ "$_cachy_config" = "no" ]; then
+       echo "Disabling CachyOS config..."
+       scripts/config --disable CACHY
+    else
+       if [ -n "$_cachy_config" ]; then
+           error "The value $_cachy_config is invalid. Choose the correct one again."
+       else
+           error "The value is empty. Choose the correct one again."
+       fi
+       error "Selecting CachyOS config failed!"
+       exit
+    fi
+
+    ### Selecting proper RT config
+    if [ -n "$_rtkernel" ]; then
+        echo "Setting proper RT config"
+        scripts/config --disable RCU_NOCB_CPU_CB_BOOST \
+            --enable RCU_NOCB_CPU_DEFAULT_ALL \
+            --enable HZ_1000 \
+            --set-val HZ 1000 \
+            --enable PREEMPT_RT \
+            --enable PREEMPT_LAZY
     fi
 
     ### Selecting the CPU scheduler
@@ -634,6 +684,28 @@ prepare() {
          exit
     fi
 
+    ### Select VMA config
+    if [ "$_vma_config" = "standard" ]; then
+       echo "Enabling per-VMA locking..."
+       scripts/config --enable PER_VMA_LOCK \
+           --disable PER_VMA_LOCK_STATS
+    elif [ "$_vma_config" = "stats" ]; then
+       echo "Enabling per-VMA locking with stats..."
+       scripts/config --enable PER_VMA_LOCK \
+           --enable PER_VMA_LOCK_STATS
+    elif [ "$_vma_config" = "none" ]; then
+       echo "Disabling per-VMA locking..."
+       scripts/config --disable PER_VMA_LOCK
+    else
+        if [ -n "$_vma_config" ]; then
+           error "The value $_vma_config is invalid. Choose the correct one again."
+        else
+           error "The value is empty. Choose the correct one again."
+        fi
+         error "Enabling per-VMA locking failed!"
+         exit
+    fi
+
     ### Enable DAMON
     if [ -n "$_damon" ]; then
         echo "Enabling DAMON..."
@@ -884,7 +956,7 @@ build() {
 }
 
 _package() {
-    pkgdesc="The $pkgdesc kernel and modules"
+    pkgdesc="$pkgdesc kernel and modules"
     depends=('coreutils' 'kmod' 'initramfs')
     optdepends=(
         'wireless-regdb: to set the correct wireless channels of your country'
