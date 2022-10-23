@@ -953,6 +953,13 @@ prepare() {
         fi
     fi
 
+    if [ "$_noccache" != "true" ] && pacman -Qq ccache &> /dev/null; then
+        export PATH="/usr/lib/ccache/bin/:$PATH"
+        export CCACHE_SLOPPINESS="file_macro,locale,time_macros"
+        export CCACHE_NOHASHDIR="true"
+        echo "ccache was found and will be used"
+    fi
+
     ### Rewrite configuration
     echo "Rewrite configuration..."
     make ${BUILD_FLAGS[*]} prepare
@@ -986,12 +993,6 @@ prepare() {
 
 build() {
     cd ${srcdir}/${_srcname}
-    if [ "$_noccache" != "true" ] && pacman -Qq ccache &> /dev/null; then
-        export PATH="/usr/lib/ccache/bin/:$PATH"
-        export CCACHE_SLOPPINESS="file_macro,locale,time_macros"
-        export CCACHE_NOHASHDIR="true"
-        echo "ccache was found and will be used"
-    fi
 
     make ${BUILD_FLAGS[*]} -j$(nproc) all
 
