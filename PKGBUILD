@@ -7,7 +7,7 @@
 # ATTENTION - one of two predefined values should be selected!
 # 'yes' - enable CachyOS config
 # 'no' - disable CachyOS config
-_cachy_config='yes'
+_cachy_config=${_cachy_config-'yes'}
 
 ### Selecting the CPU scheduler
 # ATTENTION - one of seven predefined values should be selected!
@@ -19,7 +19,7 @@ _cachy_config='yes'
 # 'cfs' - select 'Completely Fair Scheduler'
 # 'tt' - select 'Task Type Scheduler by Hamad Marri'
 # 'hardened' - select 'BORE Scheduler hardened' ## kernel with hardened config and hardening patches with the bore scheduler
-_cpusched='bore'
+_cpusched=${_cpusched-'bore'}
 
 ### TkG patches
 # Apply Tkg default settings
@@ -43,21 +43,21 @@ _ftracedisable=y
 _noccache=
 
 ### Tweak kernel options prior to a build via nconfig
-_makenconfig=
+_makenconfig=${_makenconfig-}
 
 ### Tweak kernel options prior to a build via menuconfig
-_makemenuconfig=
+_makemenuconfig=${_makemenuconfig-}
 
 ### Tweak kernel options prior to a build via xconfig
-_makexconfig=
+_makexconfig=${_makexconfig-}
 
 ### Tweak kernel options prior to a build via gconfig
-_makegconfig=
+_makegconfig=${_makegconfig-}
 
 # NUMA is optimized for multi-socket motherboards.
 # A single multi-core CPU actually runs slower with NUMA enabled.
 # See, https://bugs.archlinux.org/task/31187
-_NUMAdisable=y
+_NUMAdisable=${_NUMAdisable-}
 
 # Compile ONLY used modules to VASTLYreduce the number of modules built
 # and the build time.
@@ -67,59 +67,62 @@ _NUMAdisable=y
 # This PKGBUILD read the database kept if it exists
 #
 # More at this wiki page ---> https://wiki.archlinux.org/index.php/Modprobed-db
-_localmodcfg=
+_localmodcfg=${_localmodcfg-}
 
 # Use the current kernel's .config file
 # Enabling this option will use the .config of the RUNNING kernel rather than
 # the ARCH defaults. Useful when the package gets updated and you already went
 # through the trouble of customizing your config options.  NOT recommended when
 # a new kernel is released, but again, convenient for package bumps.
-_use_current=
+_use_current=${_use_current-}
+
+### Set this to your number of threads you have in your machine otherwise it will default to 128
+_nr_cpus=${_nr_cpus-}
 
 ### Set performance governor as default
 _per_gov=y
 
 ### Optimize harder
-_cc_harder=y
+_cc_harder=${_cc_harder-y}
 
 ### Enable TCP_CONG_BBR2
 _tcp_bbr2=y
 
 ### Running with a 1000HZ, 750Hz, 600 Hz or 500Hz tick rate
-_HZ_ticks=1000
+_HZ_ticks=${_HZ_ticks-1000}
 
 ## Choose between perodic, idle or full
 ### Full tickless can give higher performances in various cases but, depending on hardware, lower consistency.
-_tickrate=full
+_tickrate=${_tickrate-full}
 
 ## Choose between full(low-latency), voluntary or server
-_preempt=full
+_preempt=${_preempt-full}
 
 ### Disable MQ-Deadline I/O scheduler
-_mq_deadline_disable=y
+_mq_deadline_disable=${_mq_deadline_disable-}
 
 ### Disable Kyber I/O scheduler
-_kyber_disable=y
+_kyber_disable=${_kyber_disable-y}
 
 ### Enable multigenerational LRU
 # ATTENTION - one of three predefined values should be selected!
 # 'standard' - enable multigenerational LRU 
 # 'stats' - enable multigenerational LRU with stats
 # 'none' - disable multigenerational LRU
-_lru_config='standard'
+_lru_config=${_lru_config-'standard'}
 
 ### Enable per-VMA locking
 # ATTENTION - one of three predefined values should be selected!
 # 'standard' - enable per-VMA locking
 # 'stats' - enable per-VMA locking with stats
 # 'none' - disable per-VMA locking
-_vma_config='standard'
+_vma_config=${_vma_config-'standard'}
 
 ## Enable DAMON
-_damon=
+_damon=${_damon-}
 
 ## Enable Linux Random Number Generator
-_lrng_enable=y
+_lrng_enable=${_lrng_enable-y}
 
 # CPU compiler optimizations - Defaults to prompt at kernel config if left empty
 # AMD CPUs : "k8" "k8sse3" "k10" "barcelona" "bobcat" "jaguar" "bulldozer" "piledriver" "steamroller" "excavator" "zen" "zen2" "zen3"
@@ -130,15 +133,15 @@ _lrng_enable=y
 # - "generic" (kernel's default - to share the package between machines with different CPU µarch as long as they are x86-64)
 #
 # Or use the _use_auto_optimization with _use_auto_optimization=y
-_processor_opt=rocketlake
+_processor_opt=${_processor_opt-rocketlake}
 
-_use_auto_optimization=y
+_use_auto_optimization=${_use_auto_optimization-y}
 
 # disable debug to lower the size of the kernel
-_disable_debug=y
+_disable_debug=${_disable_debug-y}
 
 ## Enable zram/zswap ZSTD compression
-_zstd_swap_compression=y
+_zstd_compression=${_zstd_compression-y}
 
 ### Selecting the ZSTD kernel and modules compression level
 # ATTENTION - one of two predefined values should be selected!
@@ -146,12 +149,18 @@ _zstd_swap_compression=y
 # 'normal' - standard compression ratio
 # WARNING: the ultra settings can sometimes
 # be counterproductive in both size and speed.
-_zstd_level_value='normal'
+_zstd_level_value=${_zstd_level_value-'normal'}
 
 # Clang LTO mode, only available with the "llvm" compiler - options are "no", "full" or "thin".
 # "full: uses 1 thread for Linking, slow and uses more memory, theoretically with the highest performance gains."
 # "thin: uses multiple threads, faster and uses less memory, may have a lower runtime performance than Full."
-_use_llvm_lto=full
+_use_llvm_lto=${_use_llvm_lto-full}
+
+# Use suffix -lto only when requested by the user
+# Enabled by default.
+# If you do not want the suffix -lto remove the "y" sign next to the flag.
+# https://github.com/CachyOS/linux-cachyos/issues/36
+_use_lto_suffix=${_use_lto_suffix-y}
 
 # KCFI is a proposed forward-edge control-flow integrity scheme for
 # Clang, which is more suitable for kernel use than the existing CFI
@@ -162,30 +171,69 @@ _use_llvm_lto=full
 # you can find a patched llvm-git in the cachyos-repo's.
 # The packagename is called "llvm-git"
 # Disabled because Hello nvidia :D (Driver crashes with kCFI kernel)
-_use_kcfi=
+_use_kcfi=${_use_kcfi-}
 
 # Build the zfs module builtin in to the kernel
-_build_zfs=
+_build_zfs=${_build_zfs-}
 
 # Enable bcachefs
-_bcachefs=
+_bcachefs=${_bcachefs-}
 
-# Enable RT kernel (doesn't work with tt/cacule/prjc)
-_rtkernel=y
+# Enable RT kernel
+# Only works for CFS Scheduler and BORE Scheduler
+_rtkernel=${_rtkernel-}
+
+# Enable NEST
+# NEST is a experimental cfs scheduler you can find more about here:
+# https://www.phoronix.com/news/Nest-Linux-Scheduling-Warm-Core
+# https://gitlab.inria.fr/nest-public/nest-artifact/-/tree/main
+# ATTENTION!:NEST is only active if you start applications with
+# taskset -c $THREADS application
+# example: taskset -c 0-23 application
+# ATTENTION!:Just works together with the BORE Scheduler and CFS Scheduler
+_nest=${_nest-}
+
+# Enable LATENCY NICE
+# Latency nice is a approach to sets latency-nice as a per-task attribute
+# It can improve the latency of applications similar to sched_nice, but focused on the latency
+# You need to set the values per task
+# Ananicy-cpp has a experimental implementation for this
+# It converts sched_nice to latency_nice and set this per task
+# You need to configure ananicy-cpp for this or use existing settings
+# If you want to test it, use the following branch
+# https://gitlab.com/ananicy-cpp/ananicy-cpp/-/tree/feature/latency-nice
+_latency_nice=${_latency_nice-y}
 
 # Enable Anbox support
 _anbox=y
 
 ### END OF BUILD OPTIONS
 
+source=()
+sha256sums=()
+
+addsrc() {
+    source+=("$1")
+    sha256sums+=("SKIP")
+}
+
+if [[ -n "$_use_llvm_lto" && -n "$_use_lto_suffix" ]]; then
+    pkgsuffix=cachyos-rc-lto
+    pkgbase=linux-$pkgsuffix
+
+else
+    pkgsuffix=cachyos-rc
+    pkgbase=linux-$pkgsuffix
+fi
+
 pkgsuffix=cachyos-nightmare
 pkgbase=linux-$pkgsuffix
-_major=6.0
-# _minor=0
+_major=6.1
+_minor=0
 
 ## Release Candidate
 
-_rcver=rc5
+_rcver=rc1
 pkgver=${_major}.${_rcver}
 _stable=${_major}-${_rcver}
 
@@ -198,7 +246,7 @@ _stable=${_major}-${_rcver}
 ## Package info
 _srcname=linux-${_stable}
 #_srcname=linux-${_major}
-pkgdesc="linux-cachyos (${_cpusched}/LTO) with some tweaks"
+pkgdesc="linux-cachyos (${_cpusched}/lto) with some tweaks"
 pkgrel=1
 _kernver=$pkgver-$pkgrel
 arch=('x86_64' 'x86_64_v3')
@@ -220,36 +268,37 @@ fi
 if [ -n "$_build_zfs" ]; then
     makedepends+=(git)
 fi
+
 _patchsource="https://raw.githubusercontent.com/cachyos/kernel-patches/master/${_major}"
-source=(
-    "https://github.com/torvalds/linux/archive/refs/tags/v${_major}-${_rcver}.tar.gz"
-    "config" "config_rt"
-    "auto-cpu-optimization.sh"
-    "${_patchsource}/all/0001-cachyos-base-all.patch"
-)
+_tkgpatchsource="https://raw.githubusercontent.com/Frogging-Family/linux-tkg/master/linux-tkg-patches/${_major}"
+addsrc "https://github.com/torvalds/linux/archive/refs/tags/v${_major}-${_rcver}.tar.gz"
+addsrc "https://raw.githubusercontent.com/CachyOS/linux-cachyos/master/linux-cachyos-rc/config"
+addsrc "config_rt"
+addsrc "https://raw.githubusercontent.com/CachyOS/linux-cachyos/master/linux-cachyos-rc/auto-cpu-optimization.sh"
+addsrc "${_patchsource}/all/0001-cachyos-base-all.patch"
 ## ZFS Support
 if [ -n "$_build_zfs" ]; then
-    source+=("git+https://github.com/openzfs/zfs.git#commit=db5fd16f0b7fd5bd5e19350829c46d526fed6d71")
+    addsrc "git+https://github.com/openzfs/zfs.git#commit=db5fd16f0b7fd5bd5e19350829c46d526fed6d71"
 fi
 ## BMQ Scheduler
 if [ "$_cpusched" = "bmq" ]; then
-    source+=("${_patchsource}/sched/0001-prjc.patch")
+    addsrc "${_patchsource}/sched/0001-prjc.patch"
 fi
 ## PDS Scheduler
 if [ "$_cpusched" = "pds" ]; then
-    source+=("${_patchsource}/sched/0001-prjc.patch")
+    addsrc "${_patchsource}/sched/0001-prjc.patch"
 fi
 ## BORE Scheduler
 if [ "$_cpusched" = "bore" ]; then
-    source+=("${_patchsource}/sched/0001-bore.patch")
+    addsrc "${_patchsource}/sched/0001-bore.patch"
 fi
 ## CacULE Scheduler
 if [ "$_cpusched" = "cacule" ]; then
-    source+=("${_patchsource}/sched/0001-cacULE-cachy.patch")
+    addsrc "${_patchsource}/sched/0001-cacULE-cachy.patch"
 fi
 ## CacULE-RDB Scheduler
 if [ "$_cpusched" = "cacule-rdb" ]; then
-    source+=("${_patchsource}/sched/0001-cacULE-cachy.patch")
+    addsrc "${_patchsource}/sched/0001-cacULE-cachy.patch"
 fi
 #ä TT Scheduler
 if [ "$_cpusched" = "tt" ]; then
@@ -257,12 +306,12 @@ if [ "$_cpusched" = "tt" ]; then
 fi
 ## Hardened Patches with BORE Scheduler
 if [ "$_cpusched" = "hardened" ]; then
-    source+=("${_patchsource}/sched/0001-bore-sched.patch"
-         "${_patchsource}/0001-hardening.patch")
+    addsrc "${_patchsource}/sched/0001-bore-sched.patch"
+    addsrc "${_patchsource}/0001-hardening.patch"
 fi
 ## Kernel CFI Patch
 if [ -n "$_use_kcfi" ]; then
-    source+=("${_patchsource}/misc/0001-kcfi.patch")
+    addsrc "${_patchsource}/misc/0001-kcfi.patch"
     depends+=(llvm-git llvm-libs-git python)
     BUILD_FLAGS=(
         CC=clang
@@ -272,7 +321,7 @@ if [ -n "$_use_kcfi" ]; then
 fi
 ## bcachefs Support
 if [ -n "$_bcachefs" ]; then
-    source+=("${_patchsource}/misc/0001-bcachefs-after-lru.patch")
+    addsrc "${_patchsource}/misc/0001-bcachefs-after-lru.patch"
 fi
 
 ## O3
@@ -282,38 +331,49 @@ fi
 
 ## rt kernel
 if [ -n "$_rtkernel" ]; then
-    source+=("${_patchsource}/misc/0001-rt-rc.patch")
+    addsrc "${_patchsource}/misc/0001-rt-rc.patch"
+fi
+## NEST Support
+if [ -n "$_nest" ]; then
+    if [[ "$_cpusched" = "bore"  || "$_cpusched" = "cfs" || "$_cpusched" = "hardened" ]]; then
+        addsrc "${_patchsource}/sched/0001-NEST.patch"
+    fi
+fi
+## Latency NICE Support
+if [ -n "$_latency_nice" ]; then
+    if [[ "$_cpusched" = "bore"  || "$_cpusched" = "cfs" || "$_cpusched" = "hardened" ]]; then
+        addsrc "${_patchsource}/misc/0001-Add-latency-priority-for-CFS-class.patch"
+    fi
+fi
+# Custom patches (Tkg & kernel-patches)
+if [ -n "$_tkgify" ]; then
+    # Patches for WRITE_WATCH support in Wine
+    addsrc "${_tkgpatchsource}/0001-mm-Support-soft-dirty-flag-reset-for-VA-range.patch"
+    addsrc "${_tkgpatchsource}/0002-mm-Support-soft-dirty-flag-read-with-reset.patch"
 fi
 
-# Custom patches (Tkg & kernel-patches)
-# if [ -n "$_tkgify" ]; then
-#     # Patches for WRITE_WATCH support in Wine
-#     source+=(
-#         "https://raw.githubusercontent.com/Frogging-Family/linux-tkg/master/linux-tkg-patches/6.0/0001-mm-Support-soft-dirty-flag-reset-for-VA-range.patch"
-#         "https://raw.githubusercontent.com/Frogging-Family/linux-tkg/master/linux-tkg-patches/6.0/0002-mm-Support-soft-dirty-flag-read-with-reset.patch"
-#     )
+# if [ -n "$_acs_override" ]; then
+#     source+=("${_tkgpatchsource}/0006-add-acs-overrides_iommu.patch")
 # fi
 
-if [ -n "$_acs_override" ]; then
-    source+=("https://raw.githubusercontent.com/Frogging-Family/linux-tkg/master/linux-tkg-patches/6.0/0006-add-acs-overrides_iommu.patch")
-fi
+# if [ -n "$_misc_adds" ]; then
+#     source+=("${_tkgpatchsource}/0012-misc-additions.patch")
+# fi
 
-if [ -n "$_misc_adds" ]; then
-    source+=("https://raw.githubusercontent.com/Frogging-Family/linux-tkg/master/linux-tkg-patches/6.0/0012-misc-additions.patch")
-fi
-
-export KBUILD_BUILD_HOST=archlinux
-export KBUILD_BUILD_USER=nightmare-builder
+export KBUILD_BUILD_HOST=$(hostname -f)
+export KBUILD_BUILD_USER=$(whoami)
 export KBUILD_BUILD_TIMESTAMP="$(date -Ru${SOURCE_DATE_EPOCH:+d @$SOURCE_DATE_EPOCH})"
+export LC_ALL=C
 
 cleanup() {
     cd ../..
     rm -rf *.patch
+    rm -rf config
     rm -rf config-*
     rm -rf src
 }
 
-trap cleanup EXIT
+# trap cleanup EXIT
 
 prepare() {
 
@@ -350,10 +410,11 @@ prepare() {
 
     ### Use autooptimization
     if [ -n "$_use_auto_optimization" ]; then
+        chmod +x "${srcdir}"/auto-cpu-optimization.sh
         "${srcdir}"/auto-cpu-optimization.sh
     fi
 
-        ### Selecting CachyOS config
+    ### Selecting CachyOS config
     if [ "$_cachy_config" = "yes" ]; then
         echo "Enabling CachyOS config..."
         scripts/config --enable CACHY
@@ -427,6 +488,7 @@ prepare() {
         echo "Using linux-tkg default settings..."
         scripts/config --disable DYNAMIC_FAULT \
             --disable DEFAULT_FQ_CODEL \
+            --disable WERROR \
             --enable DEFAULT_CAKE \
 
         scripts/config --disable NTP_PPS \
@@ -928,7 +990,7 @@ build() {
         export PATH="/usr/lib/ccache/bin/:$PATH"
         export CCACHE_SLOPPINESS="file_macro,locale,time_macros"
         export CCACHE_NOHASHDIR="true"
-        echo 'ccache was found and will be used'
+        echo "ccache was found and will be used"
     fi
 
     make ${BUILD_FLAGS[*]} -j$(nproc) all
@@ -956,7 +1018,7 @@ build() {
 }
 
 _package() {
-    pkgdesc="$pkgdesc kernel and modules"
+    pkgdesc="$pkgbase kernel and modules"
     depends=('coreutils' 'kmod' 'initramfs')
     optdepends=(
         'wireless-regdb: to set the correct wireless channels of your country'
@@ -1092,9 +1154,3 @@ for _p in "${pkgname[@]}"; do
     _package${_p#$pkgbase}
     }"
 done
-
-sha256sums=('451787a0461abe26fce8af5740ac20b81610bf241ba1197be77ee9ebd3fc71ad'
-            'f4aedb0547cc412f6ebffd8bb65e17e8d8c0b6835957d308ebdb44630276c37a'
-            'ce8bf7807b45a27eed05a5e1de5a0bf6293a3bbc2085bacae70cd1368f368d1f'
-            '3aee411714000d34791085ed682cd5730aefe2d4d12187eee7cc21eb2d61d8ac'
-            'b9840635873a03b564cdefa813a3416e9ea08847424e6c284d0f838a99616625')
