@@ -57,6 +57,7 @@ _makegconfig=${_makegconfig-}
 # NUMA is optimized for multi-socket motherboards.
 # A single multi-core CPU actually runs slower with NUMA enabled.
 # See, https://bugs.archlinux.org/task/31187
+# Not disabling since the bugtrack mentioned above is very old.
 _NUMAdisable=${_NUMAdisable-}
 
 # Compile ONLY used modules to VASTLYreduce the number of modules built
@@ -212,28 +213,27 @@ _anbox=y
 source=()
 sha256sums=()
 
+# "Bypass" shasum check
 addsrc() {
     source+=("$1")
     sha256sums+=("SKIP")
 }
 
-if [[ -n "$_use_llvm_lto" && -n "$_use_lto_suffix" ]]; then
-    pkgsuffix=cachyos-rc-lto
-    pkgbase=linux-$pkgsuffix
-
-else
-    pkgsuffix=cachyos-rc
-    pkgbase=linux-$pkgsuffix
-fi
+# if [[ -n "$_use_llvm_lto" && -n "$_use_lto_suffix" ]]; then
+#     pkgsuffix=cachyos-nightmare-lto
+# else
+#     pkgsuffix=cachyos-nightmare
+# fi
 
 pkgsuffix=cachyos-nightmare
 pkgbase=linux-$pkgsuffix
+
 _major=6.1
 _minor=0
 
 ## Release Candidate
 
-_rcver=rc1
+_rcver=rc4
 pkgver=${_major}.${_rcver}
 _stable=${_major}-${_rcver}
 
@@ -250,7 +250,7 @@ pkgdesc="linux-cachyos (${_cpusched}/lto) with some tweaks"
 pkgrel=1
 _kernver=$pkgver-$pkgrel
 arch=('x86_64' 'x86_64_v3')
-url="https://github.com/CachyOS/linux-cachyos"
+url="https://github.com/nightmare-zafkiel/linux-cachyos-nightmare"
 license=('GPL2')
 options=('!strip' 'bolt')
 makedepends=('bc' 'libelf' 'pahole' 'cpio' 'perl' 'tar' 'xz' 'zstd' 'gcc' 'gcc-libs' 'glibc' 'binutils' 'make' 'patch')
@@ -273,12 +273,12 @@ _patchsource="https://raw.githubusercontent.com/cachyos/kernel-patches/master/${
 _tkgpatchsource="https://raw.githubusercontent.com/Frogging-Family/linux-tkg/master/linux-tkg-patches/${_major}"
 addsrc "https://github.com/torvalds/linux/archive/refs/tags/v${_major}-${_rcver}.tar.gz"
 addsrc "https://raw.githubusercontent.com/CachyOS/linux-cachyos/master/linux-cachyos-rc/config"
-addsrc "config_rt"
+addsrc "https://raw.githubusercontent.com/CachyOS/linux-cachyos/master/linux-cachyos-rc/config-rt"
 addsrc "https://raw.githubusercontent.com/CachyOS/linux-cachyos/master/linux-cachyos-rc/auto-cpu-optimization.sh"
 addsrc "${_patchsource}/all/0001-cachyos-base-all.patch"
 ## ZFS Support
 if [ -n "$_build_zfs" ]; then
-    addsrc "git+https://github.com/openzfs/zfs.git#commit=db5fd16f0b7fd5bd5e19350829c46d526fed6d71"
+    addsrc "git+https://github.com/cachyos/zfs.git#commit=0f4ee295ba94803e5833f57481cfdbee5d1160d4"
 fi
 ## BMQ Scheduler
 if [ "$_cpusched" = "bmq" ]; then
@@ -290,7 +290,7 @@ if [ "$_cpusched" = "pds" ]; then
 fi
 ## BORE Scheduler
 if [ "$_cpusched" = "bore" ]; then
-    addsrc "${_patchsource}/sched/0001-bore.patch"
+    addsrc "${_patchsource}/sched/0001-bore-cachy.patch"
 fi
 ## CacULE Scheduler
 if [ "$_cpusched" = "cacule" ]; then
@@ -302,11 +302,11 @@ if [ "$_cpusched" = "cacule-rdb" ]; then
 fi
 #ä TT Scheduler
 if [ "$_cpusched" = "tt" ]; then
-    source+=("${_patchsource}/sched/0001-tt-cachy.patch")
+    addsrc "${_patchsource}/sched/0001-tt-cachy.patch"
 fi
 ## Hardened Patches with BORE Scheduler
 if [ "$_cpusched" = "hardened" ]; then
-    addsrc "${_patchsource}/sched/0001-bore-sched.patch"
+    addsrc "${_patchsource}/sched/0001-bore-cachy.patch"
     addsrc "${_patchsource}/0001-hardening.patch"
 fi
 ## Kernel CFI Patch
@@ -318,6 +318,12 @@ if [ -n "$_use_kcfi" ]; then
         LD=ld.lld
         LLVM=1
     )
+fi
+## NEST Support
+if [ -n "$_nest" ]; then
+    if [[ "$_cpusched" = "bore"  || "$_cpusched" = "cfs" || "$_cpusched" = "hardened" ]]; then
+        addsrc "${_patchsource}/sched/0001-NEST.patch"
+    fi
 fi
 ## bcachefs Support
 if [ -n "$_bcachefs" ]; then
@@ -333,12 +339,6 @@ fi
 if [ -n "$_rtkernel" ]; then
     addsrc "${_patchsource}/misc/0001-rt-rc.patch"
 fi
-## NEST Support
-if [ -n "$_nest" ]; then
-    if [[ "$_cpusched" = "bore"  || "$_cpusched" = "cfs" || "$_cpusched" = "hardened" ]]; then
-        addsrc "${_patchsource}/sched/0001-NEST.patch"
-    fi
-fi
 ## Latency NICE Support
 if [ -n "$_latency_nice" ]; then
     if [[ "$_cpusched" = "bore"  || "$_cpusched" = "cfs" || "$_cpusched" = "hardened" ]]; then
@@ -350,15 +350,16 @@ if [ -n "$_tkgify" ]; then
     # Patches for WRITE_WATCH support in Wine
     addsrc "${_tkgpatchsource}/0001-mm-Support-soft-dirty-flag-reset-for-VA-range.patch"
     addsrc "${_tkgpatchsource}/0002-mm-Support-soft-dirty-flag-read-with-reset.patch"
+    addsrc "${_tkgpatchsource}/0007-v6.1-fsync1_via_futex_waitv.patch"
 fi
 
-# if [ -n "$_acs_override" ]; then
-#     source+=("${_tkgpatchsource}/0006-add-acs-overrides_iommu.patch")
-# fi
+if [ -n "$_acs_override" ]; then
+    addsrc "${_tkgpatchsource}/0006-add-acs-overrides_iommu.patch"
+fi
 
-# if [ -n "$_misc_adds" ]; then
-#     source+=("${_tkgpatchsource}/0012-misc-additions.patch")
-# fi
+if [ -n "$_misc_adds" ]; then
+    addsrc "${_tkgpatchsource}/0012-misc-additions.patch"
+fi
 
 export KBUILD_BUILD_HOST=$(hostname -f)
 export KBUILD_BUILD_USER=$(whoami)
@@ -395,7 +396,7 @@ prepare() {
 
     echo "Setting config..."
     if [ -n "$_rtkernel" ]; then
-        cp ../config_rt .config
+        cp ../config-rt .config
     else
         cp ../config .config
     fi
@@ -434,8 +435,8 @@ prepare() {
     ### Selecting proper RT config
     if [ -n "$_rtkernel" ]; then
         echo "Setting proper RT config"
-        scripts/config --disable RCU_NOCB_CPU_CB_BOOST \
-            --enable RCU_NOCB_CPU_DEFAULT_ALL \
+        scripts/config --enable RCU_NOCB_CPU_CB_BOOST \
+            --disable RCU_NOCB_CPU_DEFAULT_ALL \
             --enable HZ_1000 \
             --set-val HZ 1000 \
             --enable PREEMPT_RT \

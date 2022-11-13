@@ -3,8 +3,7 @@
 echo "Removing patches..."
 rm -rf *.patch
 echo "Removing generated config..."
-rm -rf config
-rm -rf config-*
+rm -rf config config-*
 echo "Removing source..."
 rm -rf src
 echo "Removing scripts..."
