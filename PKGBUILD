@@ -276,6 +276,12 @@ addsrc "https://raw.githubusercontent.com/CachyOS/linux-cachyos/master/linux-cac
 addsrc "https://raw.githubusercontent.com/CachyOS/linux-cachyos/master/linux-cachyos-rc/config-rt"
 addsrc "https://raw.githubusercontent.com/CachyOS/linux-cachyos/master/linux-cachyos-rc/auto-cpu-optimization.sh"
 addsrc "${_patchsource}/all/0001-cachyos-base-all.patch"
+## Latency NICE Support
+if [ -n "$_latency_nice" ]; then
+    if [[ "$_cpusched" = "bore"  || "$_cpusched" = "cfs" || "$_cpusched" = "hardened" ]]; then
+        addsrc "${_patchsource}/misc/0001-Add-latency-priority-for-CFS-class.patch"
+    fi
+fi
 ## ZFS Support
 if [ -n "$_build_zfs" ]; then
     addsrc "git+https://github.com/cachyos/zfs.git#commit=0f4ee295ba94803e5833f57481cfdbee5d1160d4"
@@ -331,35 +337,29 @@ if [ -n "$_bcachefs" ]; then
 fi
 
 ## O3
-# if [ -n "$_cc_harder" ]; then
-#     source+=("https://raw.githubusercontent.com/Frogging-Family/linux-tkg/master/linux-tkg-patches/6.0/0013-optimize_harder_O3.patch")
-# fi
+if [ -n "$_cc_harder" ]; then
+    addsrc "${_tkgpatchsource}/0013-optimize_harder_O3.patch"
+fi
 
 ## rt kernel
 if [ -n "$_rtkernel" ]; then
     addsrc "${_patchsource}/misc/0001-rt-rc.patch"
-fi
-## Latency NICE Support
-if [ -n "$_latency_nice" ]; then
-    if [[ "$_cpusched" = "bore"  || "$_cpusched" = "cfs" || "$_cpusched" = "hardened" ]]; then
-        addsrc "${_patchsource}/misc/0001-Add-latency-priority-for-CFS-class.patch"
-    fi
 fi
 # Custom patches (Tkg & kernel-patches)
 if [ -n "$_tkgify" ]; then
     # Patches for WRITE_WATCH support in Wine
     addsrc "${_tkgpatchsource}/0001-mm-Support-soft-dirty-flag-reset-for-VA-range.patch"
     addsrc "${_tkgpatchsource}/0002-mm-Support-soft-dirty-flag-read-with-reset.patch"
-    addsrc "${_tkgpatchsource}/0007-v6.1-fsync1_via_futex_waitv.patch"
+#     addsrc "${_tkgpatchsource}/0007-v6.1-fsync1_via_futex_waitv.patch"
 fi
 
 if [ -n "$_acs_override" ]; then
     addsrc "${_tkgpatchsource}/0006-add-acs-overrides_iommu.patch"
 fi
 
-if [ -n "$_misc_adds" ]; then
-    addsrc "${_tkgpatchsource}/0012-misc-additions.patch"
-fi
+# if [ -n "$_misc_adds" ]; then
+#     addsrc "${_tkgpatchsource}/0012-misc-additions.patch"
+# fi
 
 export KBUILD_BUILD_HOST=$(hostname -f)
 export KBUILD_BUILD_USER=$(whoami)
