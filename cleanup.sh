@@ -8,3 +8,4 @@ echo "Removing source..."
 rm -rf src
 echo "Removing scripts..."
 rm -rf auto-cpu-optimization.sh
+rm -rf configure

@@ -233,7 +233,7 @@ _minor=0
 
 ## Release Candidate
 
-_rcver=rc4
+_rcver=rc5
 pkgver=${_major}.${_rcver}
 _stable=${_major}-${_rcver}
 
@@ -272,6 +272,7 @@ fi
 _patchsource="https://raw.githubusercontent.com/cachyos/kernel-patches/master/${_major}"
 _tkgpatchsource="https://raw.githubusercontent.com/Frogging-Family/linux-tkg/master/linux-tkg-patches/${_major}"
 addsrc "https://github.com/torvalds/linux/archive/refs/tags/v${_major}-${_rcver}.tar.gz"
+addsrc "https://raw.githubusercontent.com/CachyOS/linux-cachyos/master/linux-cachyos-rc/configure"
 addsrc "https://raw.githubusercontent.com/CachyOS/linux-cachyos/master/linux-cachyos-rc/config"
 addsrc "https://raw.githubusercontent.com/CachyOS/linux-cachyos/master/linux-cachyos-rc/config-rt"
 addsrc "https://raw.githubusercontent.com/CachyOS/linux-cachyos/master/linux-cachyos-rc/auto-cpu-optimization.sh"
@@ -297,6 +298,7 @@ fi
 ## BORE Scheduler
 if [ "$_cpusched" = "bore" ]; then
     addsrc "${_patchsource}/sched/0001-bore-cachy.patch"
+    addsrc "${_patchsource}/misc/0001-bore-tuning-sysctl.patch"
 fi
 ## CacULE Scheduler
 if [ "$_cpusched" = "cacule" ]; then
@@ -343,7 +345,7 @@ fi
 
 ## rt kernel
 if [ -n "$_rtkernel" ]; then
-    addsrc "${_patchsource}/misc/0001-rt-rc.patch"
+    addsrc "${_patchsource}/misc/0001-rt.patch"
 fi
 # Custom patches (Tkg & kernel-patches)
 if [ -n "$_tkgify" ]; then
@@ -354,12 +356,20 @@ if [ -n "$_tkgify" ]; then
 fi
 
 if [ -n "$_acs_override" ]; then
-    addsrc "${_tkgpatchsource}/0006-add-acs-overrides_iommu.patch"
+    echo "ACS override patch is broken atm."
+#     addsrc "${_tkgpatchsource}/0006-add-acs-overrides_iommu.patch"
 fi
 
-# if [ -n "$_misc_adds" ]; then
+if [ -n "$_misc_adds" ]; then
 #     addsrc "${_tkgpatchsource}/0012-misc-additions.patch"
-# fi
+
+## Cachy patches
+
+#     addsrc "${_patchsource}/misc/0001-mm-add-zblock-new-allocator-for-use-via-zpool-API.patch"
+    addsrc "${_patchsource}/misc/0001-PCI-Allow-BAR-movement-during-boot-and-hotplug.patch"
+#     addsrc "${_patchsource}/misc/0001-mm-introduce-THP-Shrinker.patch"
+#     addsrc "${_patchsource}/misc/enable-resizable-bar-support-nv-driver.patch"
+fi
 
 export KBUILD_BUILD_HOST=$(hostname -f)
 export KBUILD_BUILD_USER=$(whoami)
@@ -372,12 +382,13 @@ cleanup() {
     rm -rf config
     rm -rf config-*
     rm -rf src
+    rm -rf configure
 }
 
 # trap cleanup EXIT
 
 prepare() {
-
+    chmod +x ./configure
     cd ${srcdir}/$_srcname
 
     echo "Setting version..."
@@ -1115,7 +1126,7 @@ _package-headers() {
     echo "Stripping build tools..."
     local file
     while read -rd '' file; do
-        case "$(file -bi "$file")" in
+        case "$(file -Sib "$file")" in
             application/x-sharedlib\;*)      # Libraries (.so)
                 strip -v $STRIP_SHARED "$file" ;;
             application/x-archive\;*)        # Libraries (.a)
