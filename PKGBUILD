@@ -133,7 +133,7 @@ _vma_config=${_vma_config-standard}
 _hugepage=${_hugepage-always}
 
 ## Enable DAMON
-_damon=${_damon-}
+_damon=${_damon-y}
 
 ## Enable Linux Random Number Generator
 _lrng_enable=${_lrng_enable-y}
@@ -147,7 +147,7 @@ _lrng_enable=${_lrng_enable-y}
 # - "generic" (kernel's default - to share the package between machines with different CPU µarch as long as they are x86-64)
 #
 # Or use the _use_auto_optimization with _use_auto_optimization=y
-_processor_opt=${_processor_opt-rocketlake}
+_processor_opt=${_processor_opt-}
 
 _use_auto_optimization=${_use_auto_optimization-y}
 
